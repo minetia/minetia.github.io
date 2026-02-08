@@ -1,0 +1,41 @@
+<div class="ex-scroll-wrapper">
+    <div id="exBar" class="ex-scroll-container">
+        </div>
+</div>
+
+<style>
+    .ex-scroll-wrapper { width: 100%; overflow: hidden; margin: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .ex-scroll-container { 
+        display: flex; overflow-x: auto; gap: 10px; padding: 12px 5px; 
+        -webkit-overflow-scrolling: touch; scrollbar-width: none; 
+    }
+    .ex-scroll-container::-webkit-scrollbar { display: none; }
+    .ex-chip { 
+        flex: 0 0 auto; white-space: nowrap; padding: 8px 20px; background: #1e293b; 
+        border: 1px solid #334155; border-radius: 20px; font-size: 0.8rem; 
+        cursor: pointer; font-weight: 700; transition: 0.2s; color: #94a3b8;
+    }
+    .ex-chip.active { border-color: #0ea5e9; color: #0ea5e9; background: rgba(14, 165, 233, 0.1); box-shadow: 0 0 10px rgba(14, 165, 233, 0.2); }
+</style>
+
+<script>
+    // 전역 변수로 거래소 데이터 정의
+    window.exchangeData = {
+        krw: ['UPBIT', 'BITHUMB', 'COINONE', 'KORBIT', 'GOPAX'],
+        global: ['BINANCE', 'BYBIT', 'OKX', 'COINBASE', 'KRAKEN', 'MEXC', 'GATEIO', 'KUCOIN', 'HUOBI', 'BITGET']
+    };
+
+    // 칩 렌더링 함수를 전역 window 객체에 할당하여 어디서든 접근 가능하게 함
+    window.renderExchangeChips = function(type, selected) {
+        const container = document.getElementById('exBar');
+        if (!container) {
+            console.error("exBar 요소를 찾을 수 없습니다.");
+            return;
+        }
+        
+        const list = window.exchangeData[type];
+        container.innerHTML = list.map(ex => `
+            <div class="ex-chip ${ex === selected ? 'active' : ''}" onclick="window.selectEx('${ex}', this)">${ex}</div>
+        `).join('');
+    };
+</script>
