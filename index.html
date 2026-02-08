@@ -7,7 +7,6 @@
     
     <link rel="stylesheet" href="https://minetia.github.io/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://minetia.github.io/script.js"></script>
 </head>
@@ -17,16 +16,13 @@
     <header id="header-placeholder"></header>
 
     <main>
-        <div class="tab-menu" style="margin-top:10px; margin-bottom:10px;">
-            <button class="tab-btn active" onclick="setMarket('UPBIT', this)">국내 시장 (UPBIT)</button>
-            <button class="tab-btn" onclick="setMarket('BINANCE', this)">해외 시장 (BINANCE)</button>
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="setMarket('UPBIT', this)">국내 (UPBIT)</button>
+            <button class="tab-btn" onclick="setMarket('BINANCE', this)">해외 (BINANCE)</button>
         </div>
 
         <div id="coinList" class="grid-container">
-            <div style="grid-column: span 2; text-align: center; padding: 50px; color: #64748b;">
-                <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>시세 데이터를 불러오는 중...
             </div>
-        </div>
     </main>
 
     <footer id="nav-placeholder"></footer>
@@ -34,30 +30,20 @@
 
 <script>
     window.onload = async () => {
-        // 1. 헤더/푸터 불러오기
         if(typeof includeResources === 'function') {
             await includeResources([
                 { id: 'header-placeholder', file: 'header.html' },
                 { id: 'nav-placeholder', file: 'nav.html' }
             ]);
         }
-
-        // 2. 시작하자마자 '국내 시장(업비트)' 데이터 바로 로드
-        setMarket('UPBIT');
+        // 시작하면 바로 업비트 데이터 로드
+        if(typeof fetchCoinData === 'function') fetchCoinData('UPBIT');
     };
 
-    // 탭 클릭 기능
     function setMarket(type, btn) {
-        // 버튼 스타일 변경
-        if(btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        
-        // 데이터 불러오기 함수 호출 (script.js에 있음)
-        if(typeof fetchCoinData === 'function') {
-            fetchCoinData(type);
-        }
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        fetchCoinData(type);
     }
 </script>
 
