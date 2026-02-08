@@ -1,4 +1,4 @@
-/* coin-script.js - (수익률 % 표시 기능 추가) */
+/* coin-script.js - (투자금 입력 + 실시간 자산 평가 반영) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -7,10 +7,6 @@ let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
-
-// 1회 투자금 (5천만원 ~ 1억원)
-const MIN_BET = 50000000; 
-const MAX_BET = 100000000;
 
 window.onload = async () => {
     await includeResources([
@@ -27,6 +23,8 @@ window.onload = async () => {
 
     initTradingView(symbol);
     updateAiVersion();
+    
+    // 저장된 데이터가 있는지 확인
     loadBotState();
 };
 
@@ -34,6 +32,24 @@ async function includeResources(targets) {
     const promises = targets.map(t => fetch(`${ROOT_URL}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html })));
     const results = await Promise.all(promises);
     results.forEach(res => { const el = document.getElementById(res.id); if(el) el.innerHTML = res.html; });
+}
+
+// [NEW] 투자금 입력 콤마 찍기
+function formatInvestmentInput(input) {
+    // 숫자만 남기기
+    let val = input.value.replace(/[^0-9]/g, '');
+    if(!val) return;
+    // 콤마 추가
+    input.value = Number(val).toLocaleString();
+    updateDashboard(); // 입력할 때도 평가자산 업데이트
+}
+
+// [NEW] 현재 설정된 투자금 가져오기 (숫자로 변환)
+function getInvestmentAmount() {
+    const input = document.getElementById('user-investment');
+    if(!input) return 50000000; // 기본값 5천만원
+    const val = input.value.replace(/,/g, '');
+    return Number(val) || 50000000;
 }
 
 // ============================================
@@ -44,7 +60,8 @@ function saveBotState() {
     const state = {
         isRunning: isRunning,
         stats: stats,
-        lastActiveTime: new Date().getTime()
+        lastActiveTime: new Date().getTime(),
+        investment: document.getElementById('user-investment').value // 투자금 설정도 저장
     };
     localStorage.setItem(`BOT_STATE_${currentCoinName}`, JSON.stringify(state));
 }
@@ -54,10 +71,16 @@ async function loadBotState() {
     if (!saved) return; 
 
     const state = JSON.parse(saved);
-    stats = state.stats; 
+    stats = state.stats;
+    
+    // 투자금 설정 복구
+    if(state.investment) {
+        const input = document.getElementById('user-investment');
+        if(input) input.value = state.investment;
+    }
 
     if (state.isRunning) {
-        document.getElementById('bot-status').innerText = "수익금 정산중...";
+        document.getElementById('bot-status').innerText = "자산 평가중...";
         await fetchCurrentPrice(); 
 
         const now = new Date().getTime();
@@ -72,6 +95,7 @@ async function loadBotState() {
         runTradeLoop(); 
         showRecoveryMessage(missedTrades);
     }
+    updateDashboard(); // 초기 대시보드 갱신
 }
 
 function showRecoveryMessage(count) {
@@ -110,7 +134,7 @@ function showRecoveryMessage(count) {
 }
 
 // ============================================
-// 수익 계산 로직
+// 수익 계산 (사용자 입력 금액 기준)
 // ============================================
 
 function calculateWinProbability() {
@@ -123,25 +147,25 @@ function calculateWinProbability() {
     else return 0.80;                       
 }
 
-// [핵심] 결과값 객체 반환 (수익금, 수익률)
 function calculateTradeResult(isWin) {
-    const betAmount = Math.floor(Math.random() * (MAX_BET - MIN_BET + 1)) + MIN_BET;
+    // [핵심] 사용자가 입력한 투자금 가져오기
+    const userBet = getInvestmentAmount();
     
-    // 수익률: 0.5% ~ 1.5%
-    const percentRaw = (Math.random() * 0.01) + 0.005; 
+    // 수익률: 0.8% ~ 1.5%
+    const profitPercent = (Math.random() * 0.007) + 0.008; 
     
     let profit = 0;
     let percent = 0;
 
     if (isWin) {
-        profit = Math.floor(betAmount * percentRaw);
-        percent = percentRaw * 100; // % 단위 변환
+        profit = Math.floor(userBet * profitPercent);
+        percent = profitPercent * 100;
     } else {
-        const lossPercentRaw = (Math.random() * 0.008) + 0.002; 
-        profit = -Math.floor(betAmount * lossPercentRaw);
-        percent = -lossPercentRaw * 100;
+        const lossPercent = (Math.random() * 0.005) + 0.005; 
+        profit = -Math.floor(userBet * lossPercent);
+        percent = -lossPercent * 100;
     }
-    return { profit: profit, percent: percent.toFixed(2) }; // 객체로 반환
+    return { profit: profit, percent: percent.toFixed(2) };
 }
 
 function simulateBackgroundTrades(count) {
@@ -173,7 +197,7 @@ function executeTrade() {
     const winProb = calculateWinProbability();
     const isWin = Math.random() < winProb; 
     
-    // [수정] 수익금과 수익률(%)을 같이 받음
+    // 수익 계산
     const resultData = calculateTradeResult(isWin);
     const profitAmount = resultData.profit;
     const profitPercent = resultData.percent;
@@ -190,7 +214,6 @@ function executeTrade() {
     const resultColor = isWin ? '#10b981' : '#ef4444';
     const plusSign = isWin ? '+' : '';
     
-    // [UI 변경] 수익금 아래에 수익률(%) 표시
     const resultHTML = `
         <div>${plusSign}${profitAmount.toLocaleString()}</div>
         <div style="font-size:0.7rem; opacity:0.8; font-weight:normal;">(${plusSign}${profitPercent}%)</div>
@@ -221,6 +244,11 @@ function resumeBotUI() {
     document.getElementById('btn-start').disabled = true;
     document.getElementById('btn-start').style.background = '#334155';
     document.getElementById('btn-start').style.color = '#94a3b8';
+    
+    // 입력창 비활성화 (매매 중 수정 방지)
+    document.getElementById('user-investment').disabled = true;
+    document.getElementById('user-investment').style.opacity = '0.5';
+
     document.getElementById('btn-stop').disabled = false;
     document.getElementById('btn-stop').style.background = '#ef4444';
     document.getElementById('btn-stop').style.color = '#fff';
@@ -248,7 +276,7 @@ async function fetchCurrentPrice() {
 
 async function startBot() {
     if(isRunning) return;
-    document.getElementById('bot-status').innerText = "매매 알고리즘 가동...";
+    document.getElementById('bot-status').innerText = "자산 연동중...";
     await fetchCurrentPrice(); 
     resumeBotUI();
     runTradeLoop();
@@ -259,9 +287,15 @@ function stopBot() {
     if(!isRunning) return;
     isRunning = false;
     clearTimeout(tradeInterval);
+    
     document.getElementById('btn-start').disabled = false;
     document.getElementById('btn-start').style.background = '#10b981';
     document.getElementById('btn-start').style.color = '#fff';
+
+    // 입력창 활성화
+    document.getElementById('user-investment').disabled = false;
+    document.getElementById('user-investment').style.opacity = '1';
+
     document.getElementById('btn-stop').disabled = true;
     document.getElementById('btn-stop').style.background = '#334155';
     document.getElementById('btn-stop').style.color = '#94a3b8';
@@ -280,12 +314,24 @@ function runTradeLoop() {
     tradeInterval = setTimeout(runTradeLoop, nextTradeTime);
 }
 
+// [핵심] 대시보드 업데이트 (실시간 자산 반영)
 function updateDashboard() {
     const profitEl = document.getElementById('total-profit');
+    const assetEl = document.getElementById('live-total-asset');
+    
     const sign = stats.profit > 0 ? '+' : '';
     profitEl.innerText = `${sign}${stats.profit.toLocaleString()} KRW`;
     profitEl.style.color = stats.profit >= 0 ? '#10b981' : '#ef4444';
     
+    // [NEW] 실시간 총 자산 계산 (원금 + 수익)
+    const principal = getInvestmentAmount();
+    const totalAsset = principal + stats.profit;
+    if(assetEl) {
+        assetEl.innerText = `${totalAsset.toLocaleString()} KRW`;
+        // 자산이 원금보다 많으면 초록색, 적으면 빨간색
+        assetEl.style.color = totalAsset >= principal ? '#10b981' : '#ef4444';
+    }
+
     const winRate = stats.total === 0 ? 0 : ((stats.wins / stats.total) * 100).toFixed(1);
     let level = "초기화";
     if(stats.total > 5000) level = "마스터";
@@ -305,7 +351,7 @@ function downloadLog() {
         if(row.id === 'recovery-msg-row') return; 
         const cols = row.querySelectorAll("td");
         let rowData = [];
-        cols.forEach(col => rowData.push(col.innerText.replace('\n', ' '))); // 줄바꿈 제거 후 저장
+        cols.forEach(col => rowData.push(col.innerText.replace('\n', ' ')));
         if(rowData.length > 0) csvContent += rowData.join(",") + "\n";
     });
     const encodedUri = encodeURI(csvContent);
