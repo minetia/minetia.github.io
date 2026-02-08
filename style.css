@@ -4,43 +4,50 @@
     --accent: #0ea5e9;
     --border: #334155;
     --up: #10b981;
-    --down: #ef4444;
 }
 
-/* 기초 설정 */
+/* 1. 기본 여백 완전 제거 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; width: 100%; background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff; font-family: sans-serif; }
 
-/* 메인 레이아웃 */
 .wrapper { display: flex; flex-direction: column; height: 100vh; }
-header { height: 65px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-footer { height: 75px; position: fixed; bottom: 0; width: 100%; background: #0f172a; border-top: 1px solid var(--border); z-index: 1000; }
 
-/* 중앙 스크롤 영역 (공백 제로) */
+/* 2. 메인 영역 밀착 (gap 제거) */
 main { 
-    flex: 1; overflow-y: auto !important; -webkit-overflow-scrolling: touch; 
-    padding: 0 12px 100px 12px; /* 상단 패딩 0으로 차트 밀착 */
-    display: flex; flex-direction: column; gap: 0px; 
+    flex: 1; overflow-y: auto !important; 
+    padding: 0 12px 90px 12px; 
+    display: flex; flex-direction: column; 
+    gap: 0px !important; /* 요소 사이 공백 제거 */
 }
 
-/* 차트 박스 밀착형 */
+/* 3. 차트 높이 및 하단 마진 축소 */
 .chart-box { 
-    width: 100%; height: 280px; min-height: 280px; 
-    border: 1px solid var(--border); border-top: none; 
-    margin-bottom: 10px; flex-shrink: 0; 
+    width: 100%; height: 260px; border: 1px solid var(--border); 
+    border-top: none; margin-bottom: 8px !important; flex-shrink: 0; 
 }
 
-/* 탭 메뉴 (메인용) */
-.tab-menu { display: grid; grid-template-columns: 1fr 1fr; background: #000; border-radius: 12px; padding: 5px; margin: 15px 0; border: 1px solid var(--border); }
-.tab-btn { border: none; background: none; color: #94a3b8; padding: 12px; font-weight: 800; cursor: pointer; }
-.tab-btn.active { background: var(--accent); color: #000; border-radius: 8px; }
+/* 4. AI 터미널 압축 */
+.ai-terminal { 
+    background: #000; border: 2px solid var(--accent); border-radius: 12px; 
+    padding: 10px; margin-bottom: 0px !important; flex-shrink: 0; 
+}
+.log-screen { height: 80px; overflow-y: auto; color: var(--up); font-size: 0.75rem; margin-bottom: 8px; }
 
-/* 코인 그리드 */
-.grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.coin-item { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); cursor: pointer; }
+/* 5. 자동매매 버튼 & 아이콘 */
+.ai-btn { 
+    width: 100%; height: 45px; background: var(--accent); color: #000; 
+    border: none; border-radius: 8px; font-weight: 800; 
+    display: flex; align-items: center; justify-content: center; gap: 8px; 
+}
 
-/* AI 터미널 및 히스토리 */
-.ai-terminal { background: #000; border: 2px solid var(--accent); border-radius: 12px; padding: 12px; flex-shrink: 0; }
-.log-screen { height: 80px; overflow-y: auto; color: var(--up); font-family: monospace; font-size: 0.75rem; margin-bottom: 8px; }
-.history-title { font-size: 1rem; font-weight: 800; color: var(--accent); margin: 15px 0 8px 5px !important; }
-.history-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 5px; flex-shrink: 0; }
+/* 6. 히스토리 제목 및 카드 (밀착형) */
+.history-title { font-size: 0.9rem; font-weight: 800; color: var(--accent); margin: 10px 0 5px 5px !important; }
+.history-card { 
+    background: var(--card); border-radius: 12px; border: 1px solid var(--border); 
+    padding: 2px; max-height: 180px; /* 리스트 높이 고정 */
+    overflow-y: auto; flex-shrink: 0; 
+}
+
+/* 7. 리스트 테이블 행 간격 초압축 */
+table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+th, td { padding: 5px 2px !important; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
