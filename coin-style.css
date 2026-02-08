@@ -1,113 +1,59 @@
-/* coin-style.css (루트 경로 저장용) */
+/* coin-style.css (루트 폴더) */
 
 :root {
     --bg: #020617;
     --card: #1e293b;
     --accent: #0ea5e9;
     --border: #334155;
-    --up: #10b981;
-    --down: #ef4444;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { 
-    background: var(--bg); 
-    color: #fff; 
-    font-family: sans-serif; 
-    overflow-x: hidden; /* 가로 스크롤 방지 */
-}
+body { background: var(--bg); color: #fff; margin: 0; font-family: sans-serif; overflow-x: hidden; }
+.wrapper { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* 전체 레이아웃 wrapper */
-.wrapper { 
-    display: flex; 
-    flex-direction: column; 
-    min-height: 100vh; 
-}
-
-/* 1. 헤더 (header.html이 들어올 자리) */
+/* [1] 상단 헤더 고정 (Sticky) */
 header { 
     height: 60px; 
-    border-bottom: 1px solid var(--border); 
-    /* 헤더 내용 스타일은 header.html이 알아서 함 */
-}
-
-/* 2. 메인 영역 */
-main {
-    flex: 1;
-    overflow-y: auto;
-    /* 하단 메뉴바 높이(70px)보다 넉넉하게 여백 줌 */
-    padding-bottom: 90px;
-}
-
-/* 3. 상세 페이지 상단 헤더 (뒤로가기 + 코인명) */
-.detail-header {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    background: #0f172a;
     border-bottom: 1px solid var(--border);
+    position: sticky; /* 스크롤 시 상단 고정 */
+    top: 0;
+    background: var(--bg); /* 배경색 필수 (투명하면 뒤가 비침) */
+    z-index: 5000; /* 차트보다 위에 오도록 */
 }
 
-.back-btn {
-    width: 36px; height: 36px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: #fff;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    margin-right: 15px;
-    transition: 0.2s;
-}
-.back-btn:active { background: var(--accent); color: #000; }
+/* 메인 영역 */
+main { flex: 1; padding-bottom: 90px; }
 
-.coin-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #fff;
-}
+/* 상세 헤더 */
+.detail-header { display: flex; align-items: center; padding: 15px; background: #0f172a; border-bottom: 1px solid var(--border); }
+.back-btn { width: 36px; height: 36px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 15px; }
+.coin-title { font-size: 1.2rem; font-weight: 800; }
 
-/* 4. 차트 컨테이너 */
-.chart-container {
-    width: 100%;
-    height: 400px; /* 차트 높이 */
-    border-bottom: 1px solid var(--border);
-    background: #000;
-}
+/* 차트 */
+.chart-container { width: 100%; height: 380px; border-bottom: 1px solid var(--border); background: #000; }
 
-/* 5. 거래 내역 (History) */
-.history-section {
-    padding: 15px;
-}
-.section-title {
-    font-size: 0.9rem;
-    color: #94a3b8;
-    margin-bottom: 10px;
-    font-weight: bold;
-    border-left: 3px solid var(--accent);
-    padding-left: 8px;
-}
+/* 리스트 스타일 */
+.trade-section { padding: 0; }
+.section-header { padding: 15px; background: #1e293b; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-th { text-align: left; color: #64748b; padding: 8px 0; border-bottom: 1px solid var(--border); font-weight: normal; }
-td { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+th { text-align: center; color: #94a3b8; padding: 12px 0; border-bottom: 1px solid var(--border); font-weight: 600; background: #0f172a; font-size: 0.8rem; }
+td { padding: 10px 0; text-align: center; vertical-align: middle; border-bottom: 1px solid #334155; }
 
-/* 6. 하단 메뉴바 (nav.html이 들어올 자리) */
-footer {
-    position: fixed; /* 화면 고정 */
-    bottom: 0; left: 0; width: 100%; height: 70px;
-    background: #0f172a; 
-    border-top: 1px solid var(--border);
-    z-index: 9999; /* 최상단 노출 */
-    display: flex; justify-content: space-around; align-items: center;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+/* [2] 페이지네이션 (번호 버튼) */
+.history-pagination {
+    display: flex; justify-content: center; gap: 5px;
+    padding: 20px 0;
 }
+.h-page-btn {
+    width: 30px; height: 30px;
+    background: var(--card); border: 1px solid var(--border);
+    color: #94a3b8; border-radius: 6px; cursor: pointer;
+    font-size: 0.8rem;
+}
+.h-page-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
 
-/* 하단 아이콘 스타일 */
-.nav-item { 
-    display: flex; flex-direction: column; align-items: center; 
-    color: #64748b; font-size: 0.7rem; 
-    text-decoration: none; cursor: pointer; 
-}
+/* 하단 메뉴 */
+footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #0f172a; border-top: 1px solid var(--border); z-index: 9999; display: flex; justify-content: space-around; align-items: center; }
+.nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; font-size: 0.7rem; text-decoration: none; }
 .nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
 .nav-item.active { color: var(--accent); }
