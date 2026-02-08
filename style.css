@@ -7,44 +7,40 @@
     --down: #ef4444;
 }
 
-/* 전체 초기화 */
+/* 기초 설정 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; }
+html, body { height: 100%; width: 100%; background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; }
 
-/* 3단 레이아웃 구조 */
+/* 메인 레이아웃 */
 .wrapper { display: flex; flex-direction: column; height: 100vh; }
+header { height: 65px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+footer { height: 75px; position: fixed; bottom: 0; width: 100%; background: #0f172a; border-top: 1px solid var(--border); z-index: 1000; }
 
-/* 헤더 & 푸터 고정 */
-header { height: 65px; flex-shrink: 0; border-bottom: 1px solid var(--border); z-index: 1000; background: var(--bg); }
-footer { height: 75px; position: fixed; bottom: 0; width: 100%; border-top: 1px solid var(--border); z-index: 1000; background: #0f172a; }
-
-/* 메인 영역 - 차트 위 공백 제거 핵심 */
+/* 중앙 스크롤 영역 (공백 제로) */
 main { 
-    flex: 1; 
-    overflow-y: auto !important; 
-    -webkit-overflow-scrolling: touch; 
-    padding: 0 12px 100px 12px; /* 상단 패딩 0 */
-    display: flex; 
-    flex-direction: column; 
-    gap: 0px; 
+    flex: 1; overflow-y: auto !important; -webkit-overflow-scrolling: touch; 
+    padding: 0 12px 100px 12px; /* 상단 패딩 0으로 차트 밀착 */
+    display: flex; flex-direction: column; gap: 0px; 
 }
 
-/* 차트 박스 밀착 */
+/* 차트 박스 밀착형 */
 .chart-box { 
     width: 100%; height: 280px; min-height: 280px; 
     border: 1px solid var(--border); border-top: none; 
-    margin-bottom: 10px; flex-shrink: 0;
+    margin-bottom: 10px; flex-shrink: 0; 
 }
 
-/* AI 터미널 */
-.ai-terminal { 
-    background: #000; border: 2px solid var(--accent); border-radius: 12px; 
-    padding: 12px; margin-bottom: 0px !important; flex-shrink: 0;
-}
+/* 탭 메뉴 (메인용) */
+.tab-menu { display: grid; grid-template-columns: 1fr 1fr; background: #000; border-radius: 12px; padding: 5px; margin: 15px 0; border: 1px solid var(--border); }
+.tab-btn { border: none; background: none; color: #94a3b8; padding: 12px; font-weight: 800; cursor: pointer; }
+.tab-btn.active { background: var(--accent); color: #000; border-radius: 8px; }
+
+/* 코인 그리드 */
+.grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.coin-item { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); cursor: pointer; }
+
+/* AI 터미널 및 히스토리 */
+.ai-terminal { background: #000; border: 2px solid var(--accent); border-radius: 12px; padding: 12px; flex-shrink: 0; }
 .log-screen { height: 80px; overflow-y: auto; color: var(--up); font-family: monospace; font-size: 0.75rem; margin-bottom: 8px; }
-
-/* 히스토리 리스트 */
 .history-title { font-size: 1rem; font-weight: 800; color: var(--accent); margin: 15px 0 8px 5px !important; }
 .history-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 5px; flex-shrink: 0; }
-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: fixed; }
-th, td { padding: 10px 2px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
