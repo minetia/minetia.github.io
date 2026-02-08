@@ -1,4 +1,4 @@
-/* coin-script.js - (자기 진화형 AI + 무중단 매매 + 메시지 디자인 수정) */
+/* coin-script.js - (디자인 깨짐 완벽 수정 + 고액 배팅 확정) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -7,6 +7,10 @@ let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
+
+// [핵심] 1회 거래당 투자 금액 (5천만원 ~ 1억원)
+const MIN_BET = 50000000; 
+const MAX_BET = 100000000;
 
 window.onload = async () => {
     await includeResources([
@@ -24,7 +28,7 @@ window.onload = async () => {
     initTradingView(symbol);
     updateAiVersion();
 
-    // 저장된 데이터 불러오기
+    // 데이터 복구 실행
     loadBotState();
 };
 
@@ -35,7 +39,7 @@ async function includeResources(targets) {
 }
 
 // ============================================
-// [핵심 1] 상태 저장 및 복구
+// 상태 저장 및 복구
 // ============================================
 
 function saveBotState() {
@@ -55,7 +59,7 @@ async function loadBotState() {
     stats = state.stats; 
 
     if (state.isRunning) {
-        document.getElementById('bot-status').innerText = "데이터 분석 복구중...";
+        document.getElementById('bot-status').innerText = "수익금 정산중...";
         await fetchCurrentPrice(); 
 
         const now = new Date().getTime();
@@ -69,52 +73,83 @@ async function loadBotState() {
         resumeBotUI();
         runTradeLoop(); 
         
-        // [수정됨] 복구 메시지를 테이블 행(TR)으로 만듦
-        const currentWinRate = calculateWinProbability() * 100;
-        const tbody = document.getElementById('history-list-body');
-        if(tbody) {
-            const msgRow = document.createElement('tr');
-            msgRow.style.background = "rgba(16, 185, 129, 0.1)"; // 연한 초록색 배경
-            msgRow.style.borderBottom = "1px solid #334155";
-            
-            const msgCell = document.createElement('td');
-            msgCell.setAttribute('colspan', '4'); // 4칸을 합침 (핵심!)
-            msgCell.style.padding = "12px";
-            msgCell.style.color = "#10b981";
-            msgCell.style.textAlign = "center";
-            msgCell.style.fontSize = "0.85rem";
-            // 깔끔한 두 줄 디자인
-            msgCell.innerHTML = `
-                <div><i class="fas fa-brain"></i> <b>AI 복구 완료</b> (부재중 ${missedTrades}건 처리)</div>
-                <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">
-                    누적 데이터 <b>${stats.total.toLocaleString()}건</b> 기반 · 
-                    현재 승률 <b>${currentWinRate.toFixed(0)}%</b> 모드 작동
-                </div>
-            `;
-            
-            msgRow.appendChild(msgCell);
-            tbody.insertBefore(msgRow, tbody.firstChild); // 맨 위에 삽입
-            
-            // 5초 뒤에 메시지 자동 삭제 (선택사항)
-            setTimeout(() => {
-                if(msgRow && msgRow.parentNode) msgRow.remove();
-            }, 5000);
-        }
+        // [디자인 수정] 메시지를 '무조건' 테이블 안으로 집어넣음
+        showRecoveryMessage(missedTrades);
     }
 }
 
+// [NEW] 복구 메시지 표시 함수 (테이블 깨짐 방지)
+function showRecoveryMessage(count) {
+    const tbody = document.getElementById('history-list-body');
+    if(!tbody) return;
+
+    // 기존 메시지 있으면 삭제 (중복 방지)
+    const oldMsg = document.getElementById('recovery-msg-row');
+    if(oldMsg) oldMsg.remove();
+
+    const currentWinRate = calculateWinProbability() * 100;
+    const profitSign = stats.profit > 0 ? '+' : '';
+
+    const row = document.createElement('tr');
+    row.id = 'recovery-msg-row'; // ID 부여
+    row.style.background = "rgba(16, 185, 129, 0.15)"; 
+    row.style.borderBottom = "1px solid #334155";
+    
+    // colspan=4 로 4칸을 합쳐서 한 줄로 만듦
+    row.innerHTML = `
+        <td colspan="4" style="padding:15px; text-align:center; color:#10b981; font-size:0.85rem;">
+            <div style="font-weight:bold; margin-bottom:5px;">
+                <i class="fas fa-check-circle"></i> AI 자동매매 복구 완료 (${count}건)
+            </div>
+            <div style="color:#cbd5e1; font-size:0.75rem;">
+                현재 승률 <b>${currentWinRate.toFixed(0)}%</b> · 
+                총 수익 <b style="color:#fff">${profitSign}${stats.profit.toLocaleString()} KRW</b>
+            </div>
+        </td>
+    `;
+    
+    // 리스트 맨 위에 삽입
+    tbody.prepend(row);
+
+    // 5초 뒤 부드럽게 사라짐
+    setTimeout(() => {
+        if(row) {
+            row.style.transition = "opacity 1s";
+            row.style.opacity = "0";
+            setTimeout(() => row.remove(), 1000);
+        }
+    }, 5000);
+}
+
 // ============================================
-// [핵심 2] 승률 진화 로직
+// 수익 계산 로직 (5천만원 배팅)
 // ============================================
 
 function calculateWinProbability() {
     const totalData = stats.total;
-    if (totalData < 50) return 0.50;        // 초기
-    else if (totalData < 200) return 0.55;  // 초급
-    else if (totalData < 500) return 0.60;  // 중급
-    else if (totalData < 1000) return 0.65; // 고급
-    else if (totalData < 5000) return 0.70; // 마스터
-    else return 0.80;                       // 신
+    if (totalData < 50) return 0.50;        
+    else if (totalData < 200) return 0.55;  
+    else if (totalData < 500) return 0.60;  
+    else if (totalData < 1000) return 0.65; 
+    else if (totalData < 5000) return 0.70; 
+    else return 0.80;                       
+}
+
+function calculateTradeResult(isWin) {
+    // 무조건 5천만원 ~ 1억원 사이로 배팅 (코인 가격 무시)
+    const betAmount = Math.floor(Math.random() * (MAX_BET - MIN_BET + 1)) + MIN_BET;
+    
+    // 변동폭: 0.8% ~ 1.5%
+    const profitPercent = (Math.random() * 0.007) + 0.008; 
+    
+    let profit = 0;
+    if (isWin) {
+        profit = Math.floor(betAmount * profitPercent); // 예: 5천만원 * 1% = 50만원
+    } else {
+        const lossPercent = (Math.random() * 0.005) + 0.005; // 손실은 조금 적게
+        profit = -Math.floor(betAmount * lossPercent);
+    }
+    return profit;
 }
 
 function simulateBackgroundTrades(count) {
@@ -123,16 +158,9 @@ function simulateBackgroundTrades(count) {
 
     for(let i=0; i<runCount; i++) {
         const isWin = Math.random() < winProb;
-        let profitAmount = 0;
-        if(isWin) {
-            stats.wins++;
-            profitAmount = Math.floor(currentRealPrice * (Math.random() * 0.01 + 0.005));
-        } else {
-            stats.losses++;
-            profitAmount = -Math.floor(currentRealPrice * (Math.random() * 0.008 + 0.002));
-        }
         stats.total++;
-        stats.profit += profitAmount;
+        if(isWin) stats.wins++; else stats.losses++;
+        stats.profit += calculateTradeResult(isWin);
     }
     updateDashboard();
 }
@@ -143,8 +171,10 @@ function executeTrade() {
 
     const now = new Date();
     const timeStr = now.toTimeString().split(' ')[0];
+    
     const variation = currentRealPrice * 0.001; 
     const tradePrice = currentRealPrice + (Math.random() * variation * 2 - variation);
+    
     const isBuy = Math.random() > 0.5;
     const typeText = isBuy ? `${currentCoinName} 롱` : `${currentCoinName} 숏`;
     const color = isBuy ? '#10b981' : '#ef4444';
@@ -152,15 +182,11 @@ function executeTrade() {
     const winProb = calculateWinProbability();
     const isWin = Math.random() < winProb; 
     
-    let profitAmount = 0;
-    if(isWin) {
-        stats.wins++;
-        profitAmount = Math.floor(tradePrice * (Math.random() * 0.01 + 0.005));
-    } else {
-        stats.losses++;
-        profitAmount = -Math.floor(tradePrice * (Math.random() * 0.008 + 0.002));
-    }
+    // [중요] 5천만원 기준 수익금 계산
+    const profitAmount = calculateTradeResult(isWin);
+
     stats.total++; 
+    if(isWin) stats.wins++; else stats.losses++;
     stats.profit += profitAmount;
 
     const row = document.createElement('tr');
@@ -177,14 +203,21 @@ function executeTrade() {
         <td style="padding:12px; color:#fff; font-weight:bold; text-align:center;">${displayPrice}</td>
         <td style="padding:12px; color:${resultColor}; font-weight:bold; text-align:center;">${resultText}</td>
     `;
-    tbody.insertBefore(row, tbody.firstChild);
-    if(tbody.children.length > 15) tbody.removeChild(tbody.lastChild);
+    
+    // 리스트 맨 위에 추가
+    tbody.prepend(row);
+    
+    if(tbody.children.length > 15) {
+        // 복구 메시지가 있으면 지우지 말고, 그 다음꺼 지우기
+        if(tbody.lastChild.id !== 'recovery-msg-row') {
+            tbody.removeChild(tbody.lastChild);
+        }
+    }
     updateDashboard();
 }
 
-
 // ============================================
-// 유틸리티 및 UI 함수들
+// 유틸리티
 // ============================================
 
 function resumeBotUI() {
@@ -219,7 +252,7 @@ async function fetchCurrentPrice() {
 
 async function startBot() {
     if(isRunning) return;
-    document.getElementById('bot-status').innerText = "패턴 분석중...";
+    document.getElementById('bot-status').innerText = "매매 알고리즘 가동...";
     await fetchCurrentPrice(); 
     resumeBotUI();
     runTradeLoop();
@@ -256,12 +289,14 @@ function updateDashboard() {
     const sign = stats.profit > 0 ? '+' : '';
     profitEl.innerText = `${sign}${stats.profit.toLocaleString()} KRW`;
     profitEl.style.color = stats.profit >= 0 ? '#10b981' : '#ef4444';
+    
     const winRate = stats.total === 0 ? 0 : ((stats.wins / stats.total) * 100).toFixed(1);
     let level = "초기화";
     if(stats.total > 5000) level = "마스터";
     else if(stats.total > 1000) level = "고수";
     else if(stats.total > 200) level = "중수";
     else if(stats.total > 50) level = "초보";
+    
     document.getElementById('win-rate').innerHTML = `${winRate}% <span style="font-size:0.7rem; color:#f59e0b; border:1px solid #f59e0b; padding:2px 4px; border-radius:4px; margin-left:5px;">${level}</span>`;
     document.getElementById('win-count').innerText = `${stats.wins}승`;
     document.getElementById('loss-count').innerText = `${stats.losses}패`;
@@ -271,7 +306,7 @@ function downloadLog() {
     let csvContent = "data:text/csv;charset=utf-8,Time,Type,Price,Profit\n";
     const rows = document.querySelectorAll("#history-list-body tr");
     rows.forEach(row => {
-        if(row.classList.contains('recovery-msg')) return; // 메시지 행 제외
+        if(row.id === 'recovery-msg-row') return; 
         const cols = row.querySelectorAll("td");
         let rowData = [];
         cols.forEach(col => rowData.push(col.innerText));
