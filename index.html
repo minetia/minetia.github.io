@@ -3,35 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI QUANT TRADING</title>
+    
     <link rel="stylesheet" href="https://minetia.github.io/style.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script src="https://minetia.github.io/script.js"></script>
 </head>
 <body>
+
 <div class="wrapper">
     <header id="header-placeholder"></header>
+
     <main>
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="setMarketType('krw', this)">국내 시장</button>
-            <button class="tab-btn" onclick="setMarketType('global', this)">국외 시장</button>
+            <button class="tab-btn active" onclick="setMarketType('krw', this)">국내 시장 (UPBIT)</button>
+            <button class="tab-btn" onclick="setMarketType('global', this)">해외 시장 (BINANCE)</button>
         </div>
-        <div id="coinList" class="grid-container"></div>
+
+        <div id="coinList" class="grid-container">
+            <div style="grid-column: span 2; text-align: center; padding: 20px; color: #64748b;">
+                <i class="fas fa-circle-notch fa-spin"></i> 데이터 로딩 중...
+            </div>
+        </div>
     </main>
+
     <footer id="nav-placeholder"></footer>
 </div>
+
 <script>
+    // 페이지 로드 시 실행
     window.onload = async () => {
+        // 1. 헤더와 네비게이션 바 불러오기
         await includeResources([
             { id: 'header-placeholder', file: 'header.html' },
             { id: 'nav-placeholder', file: 'nav.html' }
         ]);
+
+        // 2. 초기 데이터 로드 (원화 마켓)
         fetchCoinData('krw');
     };
+
+    // 탭 전환 함수
     function setMarketType(type, btn) {
+        // 모든 버튼 비활성화
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        // 클릭한 버튼 활성화
         btn.classList.add('active');
+        // 데이터 다시 불러오기
         fetchCoinData(type);
     }
 </script>
+
 </body>
 </html>
