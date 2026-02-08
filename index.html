@@ -3,95 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI QUANT</title>
-    <link rel="stylesheet" href="https://minetia.github.io/style.css">
+    <title>AI Quant Master - 2026 Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://minetia.github.io/script.js"></script>
+    <style>
+        :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; --up: #10b981; --down: #ef4444; }
+        html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; }
+        
+        /* 3단 레이아웃 고정 */
+        .wrapper { display: grid; grid-template-rows: 65px 1fr 75px; height: 100vh; width: 100vw; }
+        header { background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; z-index: 1000; }
+        #nav-placeholder { background: #0f172a; border-top: 1px solid var(--border); z-index: 1000; }
+
+        /* 본문 스크롤 영역 */
+        main { overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* 탭 및 타이틀 */
+        .tab-menu { display: grid; grid-template-columns: 1fr 1fr; background: #000; border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+        .tab-btn { border: none; background: none; color: #94a3b8; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .tab-btn.active { background: var(--accent); color: #000; }
+
+        .market-header { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 0 5px; }
+        .market-title { font-size: 1rem; font-weight: 800; }
+        .selected-ex-name { font-size: 0.75rem; color: var(--accent); font-weight: 600; background: rgba(14, 165, 233, 0.15); padding: 2px 8px; border-radius: 4px; }
+
+        /* 코인 그리드 리스트 */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 5px; }
+        .coin-item { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .coin-item:active { transform: scale(0.96); }
+        .coin-sym { font-weight: 800; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+        .coin-price { font-size: 1.1rem; font-weight: 800; font-family: 'Roboto Mono', monospace; }
+        
+        .up { color: var(--up); } .down { color: var(--down); }
+    </style>
 </head>
 <body>
 
 <div class="wrapper">
     <header id="header-placeholder"></header>
 
-    <div class="exchange-bar">
-        
-        <div class="ex-icon active" onclick="selectExchange('UPBIT', this)">
-            <i class="fas fa-arrow-trend-up"></i> UPBIT
-        </div>
-        <div class="ex-icon" onclick="selectExchange('BITHUMB', this)">
-            <i class="fas fa-coins"></i> 빗썸
-        </div>
-        <div class="ex-icon" onclick="selectExchange('COINONE', this)">
-            <i class="fas fa-wallet"></i> 코인원
-        </div>
-        <div class="ex-icon" onclick="selectExchange('KORBIT', this)">
-            <i class="fas fa-landmark"></i> 코빗
-        </div>
-        <div class="ex-icon" onclick="selectExchange('GOPAX', this)">
-            <i class="fas fa-check-double"></i> 고팍스
-        </div>
-
-        <div style="width:1px; height:40px; background:#334155; margin:0 10px; align-self:center;"></div>
-
-        <div class="ex-icon" onclick="selectExchange('BINANCE', this)">
-            <i class="fas fa-globe"></i> BINANCE
-        </div>
-        <div class="ex-icon" onclick="selectExchange('COINBASE', this)">
-            <i class="fas fa-building-columns"></i> COINBASE
-        </div>
-        <div class="ex-icon" onclick="selectExchange('BYBIT', this)">
-            <i class="fas fa-bolt"></i> BYBIT
-        </div>
-        <div class="ex-icon" onclick="selectExchange('OKX', this)">
-            <i class="fas fa-o"></i> OKX
-        </div>
-        <div class="ex-icon" onclick="selectExchange('KRAKEN', this)">
-            <i class="fas fa-tentacle"></i> KRAKEN
-        </div>
-        <div class="ex-icon" onclick="selectExchange('KUCOIN', this)">
-            <i class="fas fa-cube"></i> KUCOIN
-        </div>
-        <div class="ex-icon" onclick="selectExchange('BITGET', this)">
-            <i class="fas fa-copy"></i> BITGET
-        </div>
-        <div class="ex-icon" onclick="selectExchange('GATEIO', this)">
-            <i class="fas fa-door-open"></i> GATE.IO
-        </div>
-        <div class="ex-icon" onclick="selectExchange('HTX', this)">
-            <i class="fas fa-h-square"></i> HTX
-        </div>
-        <div class="ex-icon" onclick="selectExchange('BITFINEX', this)">
-            <i class="fas fa-money-bill-wave"></i> BITFINEX
-        </div>
-    </div>
-
     <main>
-        <div id="coinList" class="grid-container"></div>
-        
-        <div id="pagination-container" class="pagination"></div>
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="setMarket('krw', this)">국내 시장</button>
+            <button class="tab-btn" onclick="setMarket('global', this)">해외 시장</button>
+        </div>
+
+        <div class="market-header">
+            <div class="market-title" id="marketLabel">국내 실시간 시세</div>
+            <div id="exNameDisplay" class="selected-ex-name">UPBIT</div>
+        </div>
+
+        <div id="ex-placeholder"></div>
+
+        <div id="coinList" class="grid-container">
+            <div style="grid-column: span 2; text-align:center; padding:50px; color:#94a3b8;">데이터 동기화 중...</div>
+        </div>
+        <div style="height:20px;"></div>
     </main>
 
-    <footer id="nav-placeholder"></footer>
+    <div id="nav-placeholder"></div>
 </div>
 
 <script>
-    window.onload = async () => {
-        if(typeof includeResources === 'function') {
-            await includeResources([
-                { id: 'header-placeholder', file: 'header.html' },
-                { id: 'nav-placeholder', file: 'nav.html' }
-            ]);
-        }
-        fetchCoinData('UPBIT'); // 시작은 업비트
+    let marketType = 'krw';
+    let selectedEx = 'UPBIT';
+    const MODAL_URL = "https://minetia.github.io/coin/modal.html";
+
+    // [전역 함수] 인클루드 파일에서 호출할 수 있도록 window에 등록
+    window.selectEx = function(ex) {
+        selectedEx = ex;
+        document.getElementById('exNameDisplay').innerText = selectedEx;
+        if (window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx);
+        fetchCoinData();
     };
 
-    function selectExchange(ex, btn) {
-        document.querySelectorAll('.ex-icon').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        fetchCoinData(ex);
-    }
-</script>
+    // 1. 모든 컴포넌트 업어오기 (로딩 보장 로직)
+    async function loadAllComponents() {
+        const baseUrl = 'https://minetia.github.io/';
+        
+        try {
+            // 헤더, 내비 로드
+            const h = await fetch(baseUrl + 'header.html').then(r => r.text());
+            document.getElementById('header-placeholder').innerHTML = h;
+            
+            const n = await fetch(baseUrl + 'nav.html').then(r => r.text());
+            document.getElementById('nav-placeholder').innerHTML = n;
 
+            // 거래소 인클루드 로드 및 스크롤 짤림 방지 스크립트 강제 실행
+            const eHtml = await fetch(baseUrl + 'exchanges.html').then(r => r.text());
+            document.getElementById('ex-placeholder').innerHTML = eHtml;
+
+            // 인클루드된 HTML 내부의 스크립트를 추출하여 수동 실행 (이게 핵심!)
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(eHtml, 'text/html');
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(s => {
+                const newScript = document.createElement('script');
+                newScript.text = s.text;
+                document.head.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+
+            // 초기 UI 렌더링
+            setTimeout(() => {
+                if (window.renderExchangeChips) {
+                    window.renderExchangeChips(marketType, selectedEx);
+                }
+                fetchCoinData();
+            }, 100);
+
+        } catch (e) { console.error("Component load error:", e); }
+    }
+
+    // 2. 시장 전환 (국내/해외)
+    function setMarket(type, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        marketType = type;
+        selectedEx = (type === 'krw') ? 'UPBIT' : 'BINANCE';
+        
+        document.getElementById('marketLabel').innerText = type === 'krw' ? '국내 실시간 시세' : '해외 실시간 시세';
+        document.getElementById('exNameDisplay').innerText = selectedEx;
+
+        if (window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx);
+        fetchCoinData();
+    }
+
+    // 3. 실시간 코인 데이터 패칭 (2026.02 기준)
+    async function fetchCoinData() {
+        const list = document.getElementById('coinList');
+        try {
+            let res;
+            if (marketType === 'krw') {
+                const mRes = await axios.get('https://api.upbit.com/v1/market/all');
+                const krwMarkets = mRes.data.filter(m => m.market.startsWith("KRW-")).slice(0, 40);
+                res = await axios.get(`https://api.upbit.com/v1/ticker?markets=${krwMarkets.map(m => m.market).join(',')}`);
+                
+                list.innerHTML = res.data.map(t => {
+                    const sym = t.market.split('-')[1];
+                    const change = (t.signed_change_rate * 100).toFixed(2);
+                    return createCoinItem(sym, t.trade_price.toLocaleString() + " 원", change);
+                }).join('');
+            } else {
+                res = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
+                const usdtTickers = res.data.filter(t => t.symbol.endsWith("USDT")).slice(0, 40);
+                
+                list.innerHTML = usdtTickers.map(t => {
+                    const sym = t.symbol.replace("USDT", "");
+                    const change = parseFloat(t.priceChangePercent).toFixed(2);
+                    return createCoinItem(sym, "$ " + parseFloat(t.lastPrice).toLocaleString(), change);
+                }).join('');
+            }
+        } catch (e) { console.warn("API 딜레이 발생"); }
+    }
+
+    function createCoinItem(sym, price, change) {
+        return `
+            <div class="coin-item" onclick="location.href='${MODAL_URL}?coin=${sym}&ex=${selectedEx}&mode=auto'">
+                <div class="coin-sym">${sym} / ${selectedEx}</div>
+                <div class="coin-price">${price}</div>
+                <div class="coin-change ${change >= 0 ? 'up' : 'down'}">${change >= 0 ? '+' : ''}${change}%</div>
+            </div>
+        `;
+    }
+
+    window.onload = loadAllComponents;
+    setInterval(fetchCoinData, 5000); // 5초마다 실시간 갱신
+    localStorage.setItem("ai_engine_active", "true"); // 영구 가동 상태 유지
+</script>
 </body>
 </html>
