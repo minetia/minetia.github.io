@@ -1,10 +1,9 @@
-/* script.js - 완전체 엔진 */
+/* script.js */
 const BASE = "https://minetia.github.io/";
-let allCoinData = [];  // 전체 데이터 저장소
-let currentPage = 1;   // 현재 페이지
-const itemsPerPage = 20; // 페이지당 20개
+let allCoinData = [];
+let currentPage = 1;
+const itemsPerPage = 20;
 
-// 1. 리소스 인클루드
 async function includeResources(targets) {
     const promises = targets.map(t => 
         fetch(`${BASE}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html }))
@@ -16,43 +15,47 @@ async function includeResources(targets) {
     });
 }
 
-// 2. 데이터 가져오기 (200개)
 async function fetchCoinData(marketType) {
     const list = document.getElementById('coinList');
     const pagenav = document.getElementById('pagination-container');
     
+    // 초기화
     list.innerHTML = `<div style="grid-column:span 2; text-align:center; padding:50px;"><i class="fas fa-spinner fa-spin"></i> 로딩 중...</div>`;
     pagenav.innerHTML = '';
+    
+    // 화면 맨 위로 스크롤
+    const mainArea = document.querySelector('main');
+    if(mainArea) mainArea.scrollTop = 0;
 
     try {
         let rawData = [];
         
         if (marketType === 'UPBIT') {
+            // 업비트 로직
             const markets = await axios.get('https://api.upbit.com/v1/market/all?isDetails=false');
             const krwMarkets = markets.data.filter(m => m.market.startsWith('KRW-')).slice(0, 200);
             const codes = krwMarkets.map(m => m.market).join(',');
             const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=${codes}`);
-            
             rawData = res.data.map(t => ({
-                sym: t.market.split('-')[1],
-                price: Math.floor(t.trade_price).toLocaleString(),
-                change: (t.signed_change_rate * 100).toFixed(2),
-                ex: 'UPBIT', pair: 'KRW'
+                sym: t.market.split('-')[1], price: Math.floor(t.trade_price).toLocaleString(),
+                change: (t.signed_change_rate * 100).toFixed(2), ex: 'UPBIT', pair: 'KRW'
             }));
 
         } else if (marketType === 'BINANCE') {
+            // 바이낸스 로직
             const res = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
             const usdtMarkets = res.data.filter(t => t.symbol.endsWith('USDT')).slice(0, 200);
-            
             rawData = usdtMarkets.map(t => ({
-                sym: t.symbol.replace('USDT', ''),
-                price: parseFloat(t.lastPrice).toLocaleString(),
-                change: parseFloat(t.priceChangePercent).toFixed(2),
-                ex: 'BINANCE', pair: 'USDT'
+                sym: t.symbol.replace('USDT', ''), price: parseFloat(t.lastPrice).toLocaleString(),
+                change: parseFloat(t.priceChangePercent).toFixed(2), ex: 'BINANCE', pair: 'USDT'
             }));
+
         } else {
-            alert("준비 중입니다.");
-            list.innerHTML = "";
+            // 나머지 거래소 (API 없음)
+            list.innerHTML = `<div style="grid-column:span 2; text-align:center; padding:40px; color:#64748b;">
+                <i class="fas fa-tools fa-2x"></i><br><br>
+                <b>${marketType}</b><br>API 연동 준비 중입니다.
+            </div>`;
             return;
         }
 
@@ -62,15 +65,13 @@ async function fetchCoinData(marketType) {
 
     } catch (e) {
         console.error(e);
-        list.innerHTML = `<div style="text-align:center; color:red;">데이터 로드 실패</div>`;
+        list.innerHTML = `<div style="text-align:center; color:red;">데이터 통신 오류</div>`;
     }
 }
 
-// 3. 페이지 그리기 (20개씩 자르기)
 function renderPage(page) {
     currentPage = page;
     const list = document.getElementById('coinList');
-    
     const start = (page - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     const pageData = allCoinData.slice(start, end);
@@ -88,24 +89,23 @@ function renderPage(page) {
     }).join('');
 
     renderPagination();
-    document.querySelector('main').scrollTop = 0; // 맨 위로
+    document.querySelector('main').scrollTop = 0;
 }
 
-// 4. 페이지 번호 버튼 생성
 function renderPagination() {
     const container = document.getElementById('pagination-container');
     const totalPages = Math.ceil(allCoinData.length / itemsPerPage);
-    
-    // 너무 많으면 5개씩 끊거나 해야하지만, 일단 1~10까지 다 보여줌
     let html = '';
-    for(let i=1; i<=totalPages; i++) {
+    // 심플하게 10페이지까지만 제한 (너무 많아지는 것 방지)
+    const maxPage = Math.min(totalPages, 10);
+    
+    for(let i=1; i<=maxPage; i++) {
         const active = i === currentPage ? 'active' : '';
         html += `<button class="page-btn ${active}" onclick="renderPage(${i})">${i}</button>`;
     }
     container.innerHTML = html;
 }
 
-// 5. 차트 실행
 function initTradingView(symbol) {
     if (typeof TradingView !== 'undefined') {
         new TradingView.widget({
