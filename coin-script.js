@@ -1,4 +1,4 @@
-/* coin-script.js - (디자인 깨짐 완벽 수정 + 고액 배팅 확정) */
+/* coin-script.js - (수익률 % 표시 기능 추가) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -8,7 +8,7 @@ let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
 
-// [핵심] 1회 거래당 투자 금액 (5천만원 ~ 1억원)
+// 1회 투자금 (5천만원 ~ 1억원)
 const MIN_BET = 50000000; 
 const MAX_BET = 100000000;
 
@@ -27,8 +27,6 @@ window.onload = async () => {
 
     initTradingView(symbol);
     updateAiVersion();
-
-    // 데이터 복구 실행
     loadBotState();
 };
 
@@ -72,18 +70,13 @@ async function loadBotState() {
 
         resumeBotUI();
         runTradeLoop(); 
-        
-        // [디자인 수정] 메시지를 '무조건' 테이블 안으로 집어넣음
         showRecoveryMessage(missedTrades);
     }
 }
 
-// [NEW] 복구 메시지 표시 함수 (테이블 깨짐 방지)
 function showRecoveryMessage(count) {
     const tbody = document.getElementById('history-list-body');
     if(!tbody) return;
-
-    // 기존 메시지 있으면 삭제 (중복 방지)
     const oldMsg = document.getElementById('recovery-msg-row');
     if(oldMsg) oldMsg.remove();
 
@@ -91,11 +84,10 @@ function showRecoveryMessage(count) {
     const profitSign = stats.profit > 0 ? '+' : '';
 
     const row = document.createElement('tr');
-    row.id = 'recovery-msg-row'; // ID 부여
+    row.id = 'recovery-msg-row';
     row.style.background = "rgba(16, 185, 129, 0.15)"; 
     row.style.borderBottom = "1px solid #334155";
     
-    // colspan=4 로 4칸을 합쳐서 한 줄로 만듦
     row.innerHTML = `
         <td colspan="4" style="padding:15px; text-align:center; color:#10b981; font-size:0.85rem;">
             <div style="font-weight:bold; margin-bottom:5px;">
@@ -107,11 +99,7 @@ function showRecoveryMessage(count) {
             </div>
         </td>
     `;
-    
-    // 리스트 맨 위에 삽입
     tbody.prepend(row);
-
-    // 5초 뒤 부드럽게 사라짐
     setTimeout(() => {
         if(row) {
             row.style.transition = "opacity 1s";
@@ -122,7 +110,7 @@ function showRecoveryMessage(count) {
 }
 
 // ============================================
-// 수익 계산 로직 (5천만원 배팅)
+// 수익 계산 로직
 // ============================================
 
 function calculateWinProbability() {
@@ -135,32 +123,35 @@ function calculateWinProbability() {
     else return 0.80;                       
 }
 
+// [핵심] 결과값 객체 반환 (수익금, 수익률)
 function calculateTradeResult(isWin) {
-    // 무조건 5천만원 ~ 1억원 사이로 배팅 (코인 가격 무시)
     const betAmount = Math.floor(Math.random() * (MAX_BET - MIN_BET + 1)) + MIN_BET;
     
-    // 변동폭: 0.8% ~ 1.5%
-    const profitPercent = (Math.random() * 0.007) + 0.008; 
+    // 수익률: 0.5% ~ 1.5%
+    const percentRaw = (Math.random() * 0.01) + 0.005; 
     
     let profit = 0;
+    let percent = 0;
+
     if (isWin) {
-        profit = Math.floor(betAmount * profitPercent); // 예: 5천만원 * 1% = 50만원
+        profit = Math.floor(betAmount * percentRaw);
+        percent = percentRaw * 100; // % 단위 변환
     } else {
-        const lossPercent = (Math.random() * 0.005) + 0.005; // 손실은 조금 적게
-        profit = -Math.floor(betAmount * lossPercent);
+        const lossPercentRaw = (Math.random() * 0.008) + 0.002; 
+        profit = -Math.floor(betAmount * lossPercentRaw);
+        percent = -lossPercentRaw * 100;
     }
-    return profit;
+    return { profit: profit, percent: percent.toFixed(2) }; // 객체로 반환
 }
 
 function simulateBackgroundTrades(count) {
     const runCount = Math.min(count, 2000);
     const winProb = calculateWinProbability();
-
     for(let i=0; i<runCount; i++) {
         const isWin = Math.random() < winProb;
         stats.total++;
         if(isWin) stats.wins++; else stats.losses++;
-        stats.profit += calculateTradeResult(isWin);
+        stats.profit += calculateTradeResult(isWin).profit;
     }
     updateDashboard();
 }
@@ -182,8 +173,10 @@ function executeTrade() {
     const winProb = calculateWinProbability();
     const isWin = Math.random() < winProb; 
     
-    // [중요] 5천만원 기준 수익금 계산
-    const profitAmount = calculateTradeResult(isWin);
+    // [수정] 수익금과 수익률(%)을 같이 받음
+    const resultData = calculateTradeResult(isWin);
+    const profitAmount = resultData.profit;
+    const profitPercent = resultData.percent;
 
     stats.total++; 
     if(isWin) stats.wins++; else stats.losses++;
@@ -195,20 +188,23 @@ function executeTrade() {
 
     const displayPrice = formatCoinPrice(tradePrice);
     const resultColor = isWin ? '#10b981' : '#ef4444';
-    const resultText = isWin ? `+${profitAmount.toLocaleString()}` : `${profitAmount.toLocaleString()}`;
+    const plusSign = isWin ? '+' : '';
+    
+    // [UI 변경] 수익금 아래에 수익률(%) 표시
+    const resultHTML = `
+        <div>${plusSign}${profitAmount.toLocaleString()}</div>
+        <div style="font-size:0.7rem; opacity:0.8; font-weight:normal;">(${plusSign}${profitPercent}%)</div>
+    `;
 
     row.innerHTML = `
         <td style="padding:12px; color:#94a3b8; text-align:center;">${timeStr}</td>
         <td style="padding:12px; color:${color}; font-weight:800; text-align:center;">${typeText}</td>
         <td style="padding:12px; color:#fff; font-weight:bold; text-align:center;">${displayPrice}</td>
-        <td style="padding:12px; color:${resultColor}; font-weight:bold; text-align:center;">${resultText}</td>
+        <td style="padding:12px; color:${resultColor}; font-weight:bold; text-align:center;">${resultHTML}</td>
     `;
     
-    // 리스트 맨 위에 추가
     tbody.prepend(row);
-    
     if(tbody.children.length > 15) {
-        // 복구 메시지가 있으면 지우지 말고, 그 다음꺼 지우기
         if(tbody.lastChild.id !== 'recovery-msg-row') {
             tbody.removeChild(tbody.lastChild);
         }
@@ -309,7 +305,7 @@ function downloadLog() {
         if(row.id === 'recovery-msg-row') return; 
         const cols = row.querySelectorAll("td");
         let rowData = [];
-        cols.forEach(col => rowData.push(col.innerText));
+        cols.forEach(col => rowData.push(col.innerText.replace('\n', ' '))); // 줄바꿈 제거 후 저장
         if(rowData.length > 0) csvContent += rowData.join(",") + "\n";
     });
     const encodedUri = encodeURI(csvContent);
