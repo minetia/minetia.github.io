@@ -7,10 +7,11 @@
     --border: #334155;
 }
 
+/* 1. 기본 설정 (가로 스크롤 방지) */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
     background: var(--bg); 
     color: #fff; 
-    margin: 0; 
     font-family: sans-serif; 
     overflow-x: hidden; 
 }
@@ -21,109 +22,102 @@ body {
     min-height: 100vh; 
 }
 
-/* [1] 상단 헤더 (검색엔진) 완전 고정 */
+/* [핵심 1] 상단 헤더 (무조건 고정) */
 header { 
-    position: fixed; /* 스크롤해도 무조건 고정 */
-    top: 0;
-    left: 0;
-    width: 100%;
+    position: fixed;  /* 화면에 못박기 */
+    top: 0; 
+    left: 0; 
+    width: 100%; 
     height: 60px; 
-    background: var(--bg); /* 배경색 필수 (투명하면 뒤가 비침) */
+    background: #0f172a; /* 배경색 필수 */
     border-bottom: 1px solid var(--border);
-    z-index: 10000; /* 차트나 다른 요소보다 무조건 위에 */
+    z-index: 10000;   /* 모든 것보다 위에 */
 }
 
-/* [2] 메인 영역 (헤더/푸터만큼 여백 확보) */
+/* [핵심 2] 메인 영역 (헤더/푸터 뒤로 숨지 않게 여백 확보) */
 main { 
     flex: 1; 
     
-    /* [중요] 헤더 높이(60px)만큼 내용을 아래로 내림 */
+    /* 헤더 높이(60px)만큼 위를 비워둠 */
     padding-top: 60px; 
     
-    /* [중요] 푸터 높이(70px)보다 넉넉하게 여백 줌 */
-    padding-bottom: 100px; 
+    /* 푸터 높이(70px)보다 넉넉하게 아래를 비워둠 (120px) */
+    padding-bottom: 120px; 
+    
+    /* 부드러운 스크롤 */
+    overflow-y: auto; 
 }
 
-/* 상세 페이지 헤더 (뒤로가기 + 코인명) */
-.detail-header { 
+/* [핵심 3] 하단 메뉴바 (무조건 고정) */
+footer { 
+    position: fixed;  /* 화면에 못박기 */
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 70px; 
+    background: #0f172a; /* 배경색 필수 */
+    border-top: 1px solid var(--border);
+    z-index: 10000;   /* 모든 것보다 위에 */
+    
+    /* 내부 정렬 */
     display: flex; 
+    justify-content: space-around; 
     align-items: center; 
-    padding: 15px; 
-    background: #0f172a; 
-    border-bottom: 1px solid var(--border); 
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.5); /* 그림자 */
+}
+
+/* === 이하 상세 페이지 내부 스타일 === */
+
+/* 뒤로가기 헤더 */
+.detail-header { 
+    display: flex; align-items: center; padding: 15px; 
+    background: #0f172a; border-bottom: 1px solid var(--border); 
 }
 .back-btn { 
-    width: 36px; height: 36px; 
-    background: var(--card); 
-    border: 1px solid var(--border); 
-    border-radius: 8px; 
+    width: 36px; height: 36px; background: var(--card); 
+    border: 1px solid var(--border); border-radius: 8px; 
     display: flex; align-items: center; justify-content: center; 
-    cursor: pointer; 
-    margin-right: 15px; 
+    cursor: pointer; margin-right: 15px; 
 }
 .coin-title { font-size: 1.2rem; font-weight: 800; }
 
 /* 차트 */
 .chart-container { 
-    width: 100%; 
-    height: 380px; 
-    border-bottom: 1px solid var(--border); 
-    background: #000; 
+    width: 100%; height: 380px; 
+    border-bottom: 1px solid var(--border); background: #000; 
 }
 
-/* 리스트 스타일 */
+/* 리스트 컨테이너 */
 .trade-section { padding: 0; }
 
 /* 테이블 스타일 */
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th { 
-    text-align: center; 
-    color: #94a3b8; 
-    padding: 12px 0; 
-    border-bottom: 1px solid var(--border); 
-    font-weight: 600; 
-    background: #0f172a; 
-    font-size: 0.8rem; 
+    text-align: center; color: #94a3b8; padding: 12px 0; 
+    border-bottom: 1px solid var(--border); font-weight: 600; 
+    background: #1e293b; font-size: 0.8rem; 
 }
 td { 
-    padding: 10px 0; 
-    text-align: center; 
-    vertical-align: middle; 
+    padding: 10px 0; text-align: center; vertical-align: middle; 
     border-bottom: 1px solid #334155; 
 }
 
-/* 페이지네이션 (번호 버튼) */
+/* 페이지네이션 */
 .history-pagination {
     display: flex; justify-content: center; gap: 5px;
     padding: 20px 0;
 }
 .h-page-btn {
-    width: 30px; height: 30px;
-    background: var(--card); border: 1px solid var(--border);
-    color: #94a3b8; border-radius: 6px; cursor: pointer;
-    font-size: 0.8rem;
+    width: 30px; height: 30px; background: var(--card); 
+    border: 1px solid var(--border); color: #94a3b8; 
+    border-radius: 6px; cursor: pointer; font-size: 0.8rem;
 }
 .h-page-btn.active { 
-    background: var(--accent); 
-    color: #000; 
-    font-weight: bold; 
-    border-color: var(--accent); 
+    background: var(--accent); color: #000; 
+    font-weight: bold; border-color: var(--accent); 
 }
 
-/* 하단 메뉴 (고정) */
-footer { 
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 70px; 
-    background: #0f172a; 
-    border-top: 1px solid var(--border); 
-    z-index: 9999; 
-    display: flex; 
-    justify-content: space-around; 
-    align-items: center; 
-}
+/* 하단 아이콘 스타일 */
 .nav-item { 
     display: flex; flex-direction: column; align-items: center; 
     color: #64748b; font-size: 0.7rem; text-decoration: none; 
