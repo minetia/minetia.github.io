@@ -1,4 +1,4 @@
-/* coin-script.js - (수수료 표시 기능 탑재) */
+/* coin-script.js (최종 통합본: 투자금+초록점+수수료+복구) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -7,11 +7,7 @@ let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
-let currentFeeRate = 0.001; // 기본 0.1%
-
-// 1회 투자금 설정
-const MIN_BET = 50000000; 
-const MAX_BET = 100000000;
+let currentFeeRate = 0.001; // 기본 수수료
 
 window.onload = async () => {
     await includeResources([
@@ -23,8 +19,8 @@ window.onload = async () => {
     const symbol = params.get('symbol') || 'BINANCE:BTCUSDT';
     currentCoinName = params.get('coin') || 'BTC';
     
-    // 수수료율 결정 (USDT=0.2%, KRW=0.1%)
-    if (symbol.includes('USDT') || symbol.includes('BINANCE') || symbol.includes('USD')) {
+    // 수수료율 결정 (해외 0.2%, 국내 0.1%)
+    if (symbol.includes('USDT') || symbol.includes('BINANCE')) {
         currentFeeRate = 0.002; 
     } else {
         currentFeeRate = 0.001; 
@@ -59,6 +55,7 @@ function getInvestmentAmount() {
     return Number(val) || 50000000;
 }
 
+// 초록점 제어
 function updateLiveDot(active) {
     const dot = document.getElementById('live-dot');
     if(dot) {
@@ -161,7 +158,9 @@ function calculateWinProbability() {
 
 function calculateTradeResult(isWin) {
     const userBet = getInvestmentAmount();
-    const fee = Math.floor(userBet * currentFeeRate); // 수수료 계산
+    // 수수료 계산
+    const fee = Math.floor(userBet * currentFeeRate);
+
     const movePercentRaw = (Math.random() * 0.009) + 0.006; 
     
     let grossProfit = 0; 
@@ -176,6 +175,7 @@ function calculateTradeResult(isWin) {
         netProfit = grossProfit - fee;
     }
     const netPercent = (netProfit / userBet) * 100;
+    
     return { profit: netProfit, percent: netPercent.toFixed(2), fee: fee };
 }
 
@@ -208,11 +208,11 @@ function executeTrade() {
     const winProb = calculateWinProbability();
     const isWin = Math.random() < winProb; 
     
-    // [핵심] 결과 데이터 받기 (수수료 포함)
+    // 결과 계산 (수수료 포함)
     const resultData = calculateTradeResult(isWin);
     const profitAmount = resultData.profit;
     const profitPercent = resultData.percent;
-    const feePaid = resultData.fee; // 수수료
+    const feePaid = resultData.fee;
 
     stats.total++; 
     if(isWin) stats.wins++; else stats.losses++;
@@ -228,7 +228,7 @@ function executeTrade() {
     const resultColor = isNetWin ? '#10b981' : '#ef4444';
     const plusSign = isNetWin ? '+' : '';
     
-    // [UI 수정] 수수료(Fee) 표시 추가
+    // [UI 표시] 여기에 수수료가 나옵니다
     const resultHTML = `
         <div>${plusSign}${profitAmount.toLocaleString()}</div>
         <div style="font-size:0.7rem; opacity:0.8; font-weight:normal;">(${plusSign}${profitPercent}%)</div>
@@ -349,13 +349,13 @@ function updateDashboard() {
 }
 
 function downloadLog() {
-    let csvContent = "data:text/csv;charset=utf-8,Time,Type,Price,Profit\n";
+    let csvContent = "data:text/csv;charset=utf-8,Time,Type,Price,Profit,Fee\n";
     const rows = document.querySelectorAll("#history-list-body tr");
     rows.forEach(row => {
         if(row.id === 'recovery-msg-row') return; 
         const cols = row.querySelectorAll("td");
         let rowData = [];
-        cols.forEach(col => rowData.push(col.innerText.replace('\n', ' ')));
+        cols.forEach(col => rowData.push(col.innerText.replace(/\n/g, ' '))); // 줄바꿈 제거
         if(rowData.length > 0) csvContent += rowData.join(",") + "\n";
     });
     const encodedUri = encodeURI(csvContent);
