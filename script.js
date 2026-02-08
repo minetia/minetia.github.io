@@ -1,151 +1,268 @@
-/* script.js - 메인 리스트 및 검색 엔진 */
-const BASE = "https://minetia.github.io/";
-let allCoinData = [];
-let currentPage = 1;
-const itemsPerPage = 20;
-let currentMarket = 'DOMESTIC';
+/* script.js (일반 모드: 화면 꺼짐 방지 + 좀비 복구 기능 탑재) */
+const ROOT_URL = "https://minetia.github.io/";
 
-// [1] 리소스 인클루드
+let isRunning = false;
+let tradeInterval = null;
+let currentPrice = 0;
+let balance = 0; // 초기값은 HTML에서 읽어옴
+let tradeCount = 0;
+let winCount = 0;
+let wakeLock = null; // 화면 유지용
+
+// 초기화
+window.onload = async () => {
+    await includeResources([
+        { id: 'header-placeholder', file: 'header.html' },
+        { id: 'nav-placeholder', file: 'nav.html' }
+    ]);
+    
+    // 차트 로드
+    new TradingView.widget({ "container_id": "tv_chart", "symbol": "BINANCE:BTCUSDT", "interval": "1", "theme": "dark", "autosize": true, "toolbar_bg": "#0f172a", "hide_side_toolbar": true, "save_image": false });
+
+    // 검색창 엔터키 연결
+    const searchInput = document.getElementById('header-search-input');
+    if(searchInput) {
+        searchInput.onkeyup = function(e) { if(e.key === 'Enter') searchCoin(); };
+    }
+
+    // 초기 투자금 읽기
+    const balanceText = document.getElementById('balance').innerText.replace(/,/g, '').replace(' KRW', '');
+    balance = Number(balanceText) || 50000000;
+
+    // [중요] 저장된 상태 불러오기 (시간 여행)
+    loadState();
+    
+    // 가격 실시간 조회 시작
+    fetchPriceLoop();
+
+    // [중요] 화면 다시 켜졌을 때 복구
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === 'visible' && isRunning) {
+            recoverTimeGap();
+            requestWakeLock();
+        }
+    });
+};
+
 async function includeResources(targets) {
-    const promises = targets.map(t => fetch(`${BASE}${t.file}`).then(r => r.text()).then(html => ({id:t.id, html})));
+    const promises = targets.map(t => fetch(`${ROOT_URL}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html })));
     const results = await Promise.all(promises);
     results.forEach(res => { const el = document.getElementById(res.id); if(el) el.innerHTML = res.html; });
 }
 
-// [2] 시장 전환 (국내/해외)
-function switchMarket(type) {
-    currentMarket = type;
-    document.getElementById('btn-domestic').className = type === 'DOMESTIC' ? 'market-btn active' : 'market-btn';
-    document.getElementById('btn-overseas').className = type === 'OVERSEAS' ? 'market-btn active' : 'market-btn';
-    renderExchangeBar(type);
+// 화면 유지 요청
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) { console.log(err); }
+}
+
+async function fetchPriceLoop() {
+    try {
+        // 현재는 BTC 고정 (검색 기능이 URL 파라미터로 넘겨주면 좋지만, 일단 기본값)
+        const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=KRW-BTC`);
+        if(res.data && res.data.length > 0) {
+            currentPrice = res.data[0].trade_price;
+            
+            // 헤더에 가격 표시 공간이 있다면 업데이트 (일반 모드는 보통 헤더에 없음)
+            // 필요하다면 여기에 추가
+        }
+    } catch(e) {}
     
-    if(type === 'DOMESTIC') fetchDomesticData('UPBIT');
-    else fetchOverseasData('BINANCE');
+    setTimeout(fetchPriceLoop, 1000);
 }
 
-// [3] 거래소 아이콘 렌더링
-function renderExchangeBar(type) {
-    const bar = document.getElementById('exchange-bar');
-    let html = '';
-    if (type === 'DOMESTIC') {
-        const exs = [{id:'UPBIT',name:'UPBIT'},{id:'BITHUMB',name:'BITHUMB'},{id:'COINONE',name:'COINONE'},{id:'KORBIT',name:'KORBIT'},{id:'GOPAX',name:'GOPAX'}];
-        exs.forEach((ex, idx) => { html += `<div class="ex-icon ${idx===0?'active':''}" onclick="fetchDomesticData('${ex.id}', this)">${ex.name}</div>`; });
-    } else {
-        const exs = [{id:'BINANCE',name:'BINANCE'},{id:'COINBASE',name:'COINBASE'},{id:'BYBIT',name:'BYBIT'},{id:'OKX',name:'OKX'},{id:'KRAKEN',name:'KRAKEN'}];
-        exs.forEach((ex, idx) => { html += `<div class="ex-icon ${idx===0?'active':''}" onclick="fetchOverseasData('${ex.id}', this)">${ex.name}</div>`; });
-    }
-    bar.innerHTML = html;
-}
-
-// [4] 데이터 가져오기 (국내)
-async function fetchDomesticData(exchange, btn = null) {
-    updateUI(exchange, btn);
-    try {
-        const markets = await axios.get('https://api.upbit.com/v1/market/all?isDetails=false');
-        const krwMarkets = markets.data.filter(m => m.market.startsWith('KRW-')).slice(0, 100);
-        const codes = krwMarkets.map(m => m.market).join(',');
-        const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=${codes}`);
-        
-        allCoinData = res.data.map(t => ({
-            sym: t.market.split('-')[1], price: t.trade_price, change: (t.signed_change_rate * 100).toFixed(2),
-            ex: exchange, pair: 'KRW'
-        }));
-        renderPage(1);
-    } catch (e) { fetchDomesticBackup(exchange); }
-}
-
-async function fetchDomesticBackup(exchange) {
-    try {
-        const res = await axios.get('https://api.bithumb.com/public/ticker/ALL_KRW');
-        const data = res.data.data; delete data['date'];
-        allCoinData = Object.keys(data).map(key => ({
-            sym: key, price: Number(data[key].closing_price), change: data[key].fluctate_rate_24H,
-            ex: exchange, pair: 'KRW'
-        })).slice(0, 100);
-        renderPage(1);
-    } catch (e) {}
-}
-
-// [5] 데이터 가져오기 (해외)
-async function fetchOverseasData(exchange, btn = null) {
-    updateUI(exchange, btn);
-    try {
-        const res = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
-        const usdtMarkets = res.data.filter(t => t.symbol.endsWith('USDT')).slice(0, 100);
-        allCoinData = usdtMarkets.map(t => ({
-            sym: t.symbol.replace('USDT', ''), price: parseFloat(t.lastPrice), change: parseFloat(t.priceChangePercent).toFixed(2),
-            ex: exchange, pair: 'USDT'
-        }));
-        renderPage(1);
-    } catch (e) { fetchOverseasBackup(exchange); }
-}
-
-async function fetchOverseasBackup(exchange) {
-    try {
-        const res = await axios.get('https://api.coincap.io/v2/assets?limit=100');
-        allCoinData = res.data.data.map(t => ({
-            sym: t.symbol, price: parseFloat(t.priceUsd), change: parseFloat(t.changePercent24Hr).toFixed(2),
-            ex: exchange, pair: 'USD'
-        }));
-        renderPage(1);
-    } catch (e) {}
-}
-
-// [6] UI 업데이트 및 포맷팅
-function updateUI(exchange, btn) {
-    document.getElementById('market-title').innerText = `${currentMarket==='DOMESTIC'?'국내':'해외'} 실시간 시세 [${exchange}]`;
-    document.getElementById('coinList').innerHTML = `<div style="text-align:center; padding:50px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> 로딩중...</div>`;
-    if(btn) { document.querySelectorAll('.ex-icon').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-}
-
-function formatCoinPrice(price) {
-    const p = parseFloat(price);
-    if (isNaN(p)) return '-';
-    if (p >= 100) return Math.floor(p).toLocaleString(); 
-    else if (p >= 1) return p.toFixed(2); 
-    else return p.toFixed(4); 
-}
-
-// [7] 렌더링
-function renderPage(page) {
-    currentPage = page;
-    const list = document.getElementById('coinList');
-    const start = (page - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const pageData = allCoinData.slice(start, end);
-
-    list.innerHTML = pageData.map(d => {
-        const isUp = parseFloat(d.change) >= 0;
-        const color = isUp ? '#10b981' : '#ef4444';
-        return `
-            <div class="coin-item" onclick="location.href='${BASE}coin/modal.html?symbol=${d.ex}:${d.sym}${d.pair}&coin=${d.sym}'" style="background:#1e293b; border:1px solid #334155; padding:15px; border-radius:12px; cursor:pointer;">
-                <div style="color:#94a3b8; font-size:0.8rem; margin-bottom:5px;">${d.sym}</div>
-                <div style="color:#fff; font-size:1.1rem; font-weight:800; margin-bottom:5px;">
-                    ${formatCoinPrice(d.price)} <span style="font-size:0.7rem;">${d.pair==='KRW'?'원':'$'}</span>
-                </div>
-                <div style="color:${color}; font-size:0.9rem; font-weight:700;">${d.change}%</div>
-            </div>`;
-    }).join('');
-    renderPagination();
-}
-
-function renderPagination() {
-    const container = document.getElementById('pagination-container');
-    const totalPages = Math.ceil(allCoinData.length / itemsPerPage);
-    const maxPage = Math.min(totalPages, 10);
-    let html = '';
-    for(let i=1; i<=maxPage; i++) {
-        const active = i === currentPage ? 'active' : '';
-        html += `<button class="page-btn ${active}" onclick="renderPage(${i})" style="width:30px; height:30px; margin:2px; border-radius:4px; border:1px solid #334155; background:${active?'#0ea5e9':'#1e293b'}; color:${active?'#fff':'#94a3b8'};">${i}</button>`;
-    }
-    container.innerHTML = html;
-}
-
-// [8] 검색 기능 (추가됨)
-function searchCoin() {
+// 검색 기능 (일반 모드용)
+window.searchCoin = function() {
     const input = document.getElementById('header-search-input');
     if (!input) return;
     let symbol = input.value.toUpperCase().trim();
     if (!symbol) { alert("코인명을 입력해주세요."); return; }
-    location.href = `https://minetia.github.io/coin/modal.html?symbol=BINANCE:${symbol}USDT&coin=${symbol}`;
+    
+    // 일반 모드는 차트만 바꿈 (간단하게 처리)
+    new TradingView.widget({ "container_id": "tv_chart", "symbol": `BINANCE:${symbol}USDT`, "interval": "1", "theme": "dark", "autosize": true, "toolbar_bg": "#0f172a", "hide_side_toolbar": true, "save_image": false });
+}
+
+// 매매 시작
+function startTrading() {
+    if(isRunning) return;
+    isRunning = true;
+    
+    requestWakeLock(); // 화면 유지
+    
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-start').style.backgroundColor = '#334155';
+    document.getElementById('btn-stop').disabled = false;
+    document.getElementById('btn-stop').style.backgroundColor = '#ef4444';
+
+    runAutoTrade();
+    saveState();
+}
+
+// 매매 중지
+function stopTrading() {
+    isRunning = false;
+    clearTimeout(tradeInterval);
+    
+    if (wakeLock !== null) {
+        wakeLock.release().then(() => { wakeLock = null; });
+    }
+
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').style.backgroundColor = '#2563eb';
+    document.getElementById('btn-stop').disabled = true;
+    document.getElementById('btn-stop').style.backgroundColor = '#334155';
+    
+    saveState();
+}
+
+// 자동 매매 루프
+function runAutoTrade() {
+    if(!isRunning) return;
+
+    // 가격이 로딩된 상태여야만 매매
+    if(currentPrice > 0) {
+        executeTrade();
+        saveState();
+    }
+
+    // 속도: 1초 ~ 2초
+    const nextTime = Math.random() * 1000 + 1000;
+    tradeInterval = setTimeout(runAutoTrade, nextTime);
+}
+
+// 매매 실행 로직
+function executeTrade() {
+    const isWin = Math.random() < 0.55; // 승률 55%
+    const betAmount = 1000000; // 1회 베팅금 100만원 고정
+    const fee = betAmount * 0.001; // 수수료
+    const percent = (Math.random() * 0.005) + 0.003; // 변동폭
+
+    let profit = 0;
+    if(isWin) profit = Math.floor(betAmount * percent) - fee;
+    else profit = -Math.floor(betAmount * (percent * 0.8)) - fee;
+
+    balance += profit;
+    tradeCount++;
+    if(profit > 0) winCount++;
+
+    updateUI(profit);
+    addLog(profit);
+}
+
+// UI 업데이트
+function updateUI(profit) {
+    document.getElementById('balance').innerText = balance.toLocaleString() + " KRW";
+    
+    const profitEl = document.getElementById('profit');
+    const profitVal = balance - 50000000; // 원금 5천만원 기준
+    profitEl.innerText = (profitVal > 0 ? '+' : '') + profitVal.toLocaleString();
+    profitEl.style.color = profitVal >= 0 ? '#10b981' : '#ef4444';
+
+    const winRateEl = document.getElementById('win-rate');
+    const rate = tradeCount > 0 ? ((winCount / tradeCount) * 100).toFixed(1) : 0;
+    winRateEl.innerText = rate + "%";
+}
+
+// 로그 추가
+function addLog(profit) {
+    const tbody = document.getElementById('log-table');
+    const row = document.createElement('tr');
+    
+    const now = new Date().toTimeString().split(' ')[0];
+    const type = Math.random() > 0.5 ? "롱" : "숏";
+    const color = profit >= 0 ? '#10b981' : '#ef4444';
+    const sign = profit >= 0 ? '+' : '';
+
+    row.innerHTML = `
+        <td style="padding:10px; color:#94a3b8;">${now}</td>
+        <td style="padding:10px; font-weight:bold;">${type}</td>
+        <td style="padding:10px; text-align:right; color:${color}; font-weight:bold;">
+            ${sign}${profit.toLocaleString()}
+        </td>
+    `;
+
+    tbody.prepend(row);
+    if(tbody.children.length > 30) tbody.removeChild(tbody.lastChild);
+}
+
+// [핵심] 상태 저장
+function saveState() {
+    const state = {
+        isRunning: isRunning,
+        lastTime: Date.now(),
+        balance: balance,
+        tradeCount: tradeCount,
+        winCount: winCount
+    };
+    localStorage.setItem('GENERAL_AI_STATE', JSON.stringify(state));
+}
+
+// [핵심] 상태 불러오기 + 시간 복구
+function loadState() {
+    const saved = localStorage.getItem('GENERAL_AI_STATE');
+    if(!saved) return;
+    const state = JSON.parse(saved);
+
+    balance = state.balance || 50000000;
+    tradeCount = state.tradeCount || 0;
+    winCount = state.winCount || 0;
+    
+    updateUI(0); // UI 초기화
+
+    if(state.isRunning) {
+        isRunning = true;
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-start').style.backgroundColor = '#334155';
+        document.getElementById('btn-stop').disabled = false;
+        document.getElementById('btn-stop').style.backgroundColor = '#ef4444';
+        
+        recoverTimeGap(); // 로드 직후 복구 시도
+        runAutoTrade();
+    }
+}
+
+// [핵심] 좀비 복구 (부재중 매매 처리)
+function recoverTimeGap() {
+    const saved = localStorage.getItem('GENERAL_AI_STATE');
+    if(!saved) return;
+    const state = JSON.parse(saved);
+
+    const now = Date.now();
+    const diff = now - state.lastTime;
+
+    // 2초 이상 멈췄었다면 복구
+    if(diff > 2000 && state.isRunning) {
+        const missedTrades = Math.floor(diff / 1500); // 1.5초당 1회
+        const simulateCount = Math.min(missedTrades, 200);
+
+        if(simulateCount > 0) {
+            for(let i=0; i<simulateCount; i++) {
+                // UI 갱신 없이 계산만 빠르게 수행
+                const isWin = Math.random() < 0.55;
+                const betAmount = 1000000;
+                const fee = betAmount * 0.001;
+                const percent = (Math.random() * 0.005) + 0.003;
+                let profit = 0;
+                
+                if(isWin) profit = Math.floor(betAmount * percent) - fee;
+                else profit = -Math.floor(betAmount * (percent * 0.8)) - fee;
+
+                balance += profit;
+                tradeCount++;
+                if(profit > 0) winCount++;
+                
+                // 마지막 1건은 로그에 표시
+                if(i === simulateCount - 1) {
+                    addLog(profit);
+                    updateUI(profit);
+                }
+            }
+            console.log(`[General AI] ${simulateCount}건 복구 완료`);
+            // 알림은 너무 자주 뜨면 귀찮으니 로그만 남김 (또는 필요시 alert 추가)
+        }
+        saveState();
+    }
 }
