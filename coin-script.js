@@ -1,35 +1,32 @@
-/* coin-script.js (루트 경로에 저장) */
-
-// 기본 주소 설정
-const BASE_URL = "https://minetia.github.io/";
+/* coin-script.js (루트 폴더) */
+const ROOT_URL = "https://minetia.github.io/";
 
 window.onload = async () => {
-    // 1. 헤더/푸터 불러오기 (루트 경로에서)
+    // 1. 헤더, 네비, 그리고 [history.html] 가져오기
     await includeResources([
         { id: 'header-placeholder', file: 'header.html' },
-        { id: 'nav-placeholder', file: 'nav.html' }
+        { id: 'nav-placeholder', file: 'nav.html' },
+        { id: 'history-placeholder', file: 'history.html' } // 여기!
     ]);
 
-    // 2. URL 파라미터 읽기
+    // 2. 코인 이름 설정
     const params = new URLSearchParams(window.location.search);
     const symbol = params.get('symbol') || 'BINANCE:BTCUSDT';
     const coinName = params.get('coin') || 'BTC';
-
-    // 3. 화면 업데이트
+    
     const titleEl = document.getElementById('coin-name-display');
     if(titleEl) titleEl.innerText = coinName;
 
-    // 4. 차트 실행
+    // 3. 차트 실행
     initTradingView(symbol);
 
-    // 5. 가짜 데이터 채우기
-    loadFakeHistory();
+    // 4. 히스토리 데이터 채우기
+    loadHistoryData();
 };
 
-// 인클루드 함수
 async function includeResources(targets) {
     const promises = targets.map(t => 
-        fetch(`${BASE_URL}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html }))
+        fetch(`${ROOT_URL}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html }))
     );
     const results = await Promise.all(promises);
     results.forEach(res => {
@@ -38,7 +35,39 @@ async function includeResources(targets) {
     });
 }
 
-// 트레이딩뷰 차트
+// [데이터 생성] history.html 안에 있는 tbody를 찾아서 채움
+function loadHistoryData() {
+    const tbody = document.getElementById('history-list-body');
+    if(!tbody) return;
+
+    let html = '';
+    let now = new Date();
+
+    for(let i=0; i<15; i++) {
+        now.setSeconds(now.getSeconds() - Math.floor(Math.random() * 45));
+        const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
+        
+        const isBuy = Math.random() > 0.5;
+        const type = isBuy ? 'AI 매수' : 'AI 매도';
+        const color = isBuy ? '#ef4444' : '#3b82f6'; // 빨강/파랑
+        const bg = isBuy ? 'rgba(239, 68, 68, 0.05)' : 'rgba(59, 130, 246, 0.05)';
+        
+        // 가격 랜덤 (9800만원 근처)
+        const price = (98000000 + Math.floor(Math.random() * 300000)).toLocaleString();
+        const amount = (Math.random() * 0.5 + 0.001).toFixed(4);
+
+        html += `
+            <tr style="background:${bg}; border-bottom:1px solid #1e293b;">
+                <td style="padding:10px; color:#94a3b8; text-align:center;">${timeStr}</td>
+                <td style="padding:10px; color:${color}; font-weight:800; text-align:center;">${type}</td>
+                <td style="padding:10px; color:#fff; font-weight:bold; text-align:center;">${price}</td>
+                <td style="padding:10px; color:#cbd5e1; text-align:center;">${amount}</td>
+            </tr>
+        `;
+    }
+    tbody.innerHTML = html;
+}
+
 function initTradingView(symbol) {
     if (typeof TradingView !== 'undefined') {
         new TradingView.widget({
@@ -54,32 +83,4 @@ function initTradingView(symbol) {
             "save_image": false
         });
     }
-}
-
-// 뒤로가기 (메인으로 이동)
-function goBack() {
-    location.href = BASE_URL + "index.html";
-}
-
-// 체결 내역 (더미)
-function loadFakeHistory() {
-    const tbody = document.getElementById('history-body');
-    if(!tbody) return;
-    
-    let html = '';
-    for(let i=0; i<5; i++) {
-        const type = i % 2 === 0 ? '매수' : '매도';
-        const color = type === '매수' ? '#ef4444' : '#3b82f6';
-        const price = (98000000 + (Math.random()*100000)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
-        html += `
-            <tr>
-                <td style="color:#cbd5e1">14:0${i}</td>
-                <td style="color:${color}; font-weight:bold;">${type}</td>
-                <td>${price}</td>
-                <td>0.012</td>
-            </tr>
-        `;
-    }
-    tbody.innerHTML = html;
 }
