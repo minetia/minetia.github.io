@@ -1,4 +1,4 @@
-/* coin-script.js - (상태 저장 및 백그라운드 시뮬레이션 기능 탑재) */
+/* coin-script.js - (자기 진화형 AI + 무중단 매매) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -6,6 +6,7 @@ let currentCoinName = "BTC";
 let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
+// stats에 'exp(경험치)' 개념이 포함됩니다.
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
 
 window.onload = async () => {
@@ -24,7 +25,7 @@ window.onload = async () => {
     initTradingView(symbol);
     updateAiVersion();
 
-    // [핵심] 저장된 상태 불러오기 (창 닫았다 켜도 복구)
+    // [중요] 저장된 경험치(데이터) 불러오기
     loadBotState();
 };
 
@@ -35,69 +36,79 @@ async function includeResources(targets) {
 }
 
 // ============================================
-// [핵심 기능] 상태 저장 및 복구 (LocalStorage)
+// [핵심 1] 상태 저장 및 복구 (데이터 누적)
 // ============================================
 
-// 1. 상태 저장 (매매할 때마다 호출)
 function saveBotState() {
     const state = {
         isRunning: isRunning,
-        stats: stats,
-        lastActiveTime: new Date().getTime() // 마지막 작동 시간 저장
+        stats: stats, // 여기에 누적 거래량(total)이 저장됨 -> 이게 곧 빅데이터
+        lastActiveTime: new Date().getTime()
     };
-    // 코인 이름별로 따로 저장 (BTC따로, ETH따로)
     localStorage.setItem(`BOT_STATE_${currentCoinName}`, JSON.stringify(state));
 }
 
-// 2. 상태 불러오기 (페이지 열 때 호출)
 async function loadBotState() {
     const saved = localStorage.getItem(`BOT_STATE_${currentCoinName}`);
-    if (!saved) return; // 저장된 게 없으면 패스
+    if (!saved) return; 
 
     const state = JSON.parse(saved);
-    stats = state.stats; // 수익금 복구
+    stats = state.stats; 
 
-    // 만약 끄기 전에 '가동중' 이었다면?
     if (state.isRunning) {
-        document.getElementById('bot-status').innerText = "복구중...";
-        await fetchCurrentPrice(); // 가격 가져오기
+        document.getElementById('bot-status').innerText = "데이터 분석 복구중...";
+        await fetchCurrentPrice(); 
 
-        // [시간 여행] 꺼져있던 시간 동안의 수익 계산
+        // 부재중 매매 시뮬레이션
         const now = new Date().getTime();
         const diffSeconds = (now - state.lastActiveTime) / 1000;
-        
-        // 3초당 1회 매매했다고 가정
-        const missedTrades = Math.floor(diffSeconds / 3);
+        const missedTrades = Math.floor(diffSeconds / 3); // 3초당 1회
         
         if (missedTrades > 0) {
-            console.log(`${missedTrades}건의 부재중 매매 시뮬레이션...`);
-            simulateBackgroundTrades(missedTrades); // 부재중 수익 추가
+            simulateBackgroundTrades(missedTrades); 
         }
 
-        // 봇 다시 시작 (UI 복구)
         resumeBotUI();
-        runTradeLoop(); // 매매 루프 재가동
+        runTradeLoop(); 
         
-        // 안내 메시지
+        // 안내 메시지 (데이터 기반 승률 표시)
+        const currentWinRate = calculateWinProbability() * 100;
         const msg = document.createElement('div');
         msg.innerHTML = `<div style="padding:10px; background:#1e293b; color:#10b981; margin-bottom:10px; border-radius:8px; font-size:0.8rem; text-align:center;">
-            <i class="fas fa-bolt"></i> 자동매매 복구 완료! <br>
-            부재중 <b>${missedTrades}건</b>의 매매가 처리되었습니다.
+            <i class="fas fa-brain"></i> <b>AI 복구 완료</b> <br>
+            누적 데이터 <b>${stats.total}건</b>을 기반으로<br>
+            현재 승률 <b>${currentWinRate.toFixed(0)}%</b> 모드로 작동합니다.
         </div>`;
         const list = document.getElementById('history-list-body');
         if(list) list.parentElement.insertBefore(msg, list.parentElement.firstChild);
     }
 }
 
-// 3. 부재중 매매 시뮬레이션 (수익만 계산)
-function simulateBackgroundTrades(count) {
-    // 너무 많으면 최대 1000개까지만 (브라우저 렉 방지)
-    const runCount = Math.min(count, 1000);
+// ============================================
+// [핵심 2] 데이터 양에 따른 승률 진화 로직
+// ============================================
+
+function calculateWinProbability() {
+    const totalData = stats.total;
     
+    // 데이터가 쌓일수록 승률이 올라가는 '러닝 커브' 구현
+    if (totalData < 50) return 0.50;        // 초기: 50% (학습중)
+    else if (totalData < 200) return 0.55;  // 초급: 55%
+    else if (totalData < 500) return 0.60;  // 중급: 60%
+    else if (totalData < 1000) return 0.65; // 고급: 65%
+    else if (totalData < 5000) return 0.70; // 마스터: 70%
+    else return 0.80;                       // 신의 경지: 80%
+}
+
+// 부재중 시뮬레이션에도 진화된 승률 적용
+function simulateBackgroundTrades(count) {
+    const runCount = Math.min(count, 2000); // 최대 2000개
+    // 현재 레벨에 맞는 승률 가져오기
+    const winProb = calculateWinProbability();
+
     for(let i=0; i<runCount; i++) {
-        const isWin = Math.random() > 0.35; // 승률 65%
+        const isWin = Math.random() < winProb; // 진화된 승률 적용
         let profitAmount = 0;
-        // 현재 가격 기준으로 대략 계산
         if(isWin) {
             stats.wins++;
             profitAmount = Math.floor(currentRealPrice * (Math.random() * 0.01 + 0.005));
@@ -105,87 +116,13 @@ function simulateBackgroundTrades(count) {
             stats.losses++;
             profitAmount = -Math.floor(currentRealPrice * (Math.random() * 0.008 + 0.002));
         }
-        stats.total++;
+        stats.total++; // 데이터 누적
         stats.profit += profitAmount;
     }
-    updateDashboard(); // 대시보드 갱신
+    updateDashboard();
 }
 
-// 4. UI만 '가동중'으로 변경하는 함수
-function resumeBotUI() {
-    isRunning = true;
-    document.getElementById('btn-start').disabled = true;
-    document.getElementById('btn-start').style.background = '#334155';
-    document.getElementById('btn-start').style.color = '#94a3b8';
-    
-    document.getElementById('btn-stop').disabled = false;
-    document.getElementById('btn-stop').style.background = '#ef4444';
-    document.getElementById('btn-stop').style.color = '#fff';
-
-    document.getElementById('bot-status').innerText = "가동중...";
-    document.getElementById('bot-status').style.color = "#10b981";
-    document.getElementById('bot-status').style.border = "1px solid #10b981";
-    document.getElementById('empty-msg').style.display = 'none';
-}
-
-// ============================================
-// 기존 기능 (수정됨)
-// ============================================
-
-function formatCoinPrice(price) {
-    const p = parseFloat(price);
-    if (isNaN(p)) return '-';
-    if (p >= 100) return Math.floor(p).toLocaleString(); 
-    else if (p >= 1) return p.toFixed(2); 
-    else return p.toFixed(4); 
-}
-
-async function fetchCurrentPrice() {
-    try {
-        const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=KRW-${currentCoinName}`);
-        if(res.data && res.data.length > 0) currentRealPrice = res.data[0].trade_price;
-        else currentRealPrice = getFallbackPrice(currentCoinName);
-    } catch (e) { currentRealPrice = getFallbackPrice(currentCoinName); }
-}
-
-async function startBot() {
-    if(isRunning) return;
-    document.getElementById('bot-status').innerText = "가격 분석중...";
-    await fetchCurrentPrice(); 
-    resumeBotUI(); // UI 변경 분리됨
-    runTradeLoop();
-    saveBotState(); // [저장] 시작 상태 저장
-}
-
-function stopBot() {
-    if(!isRunning) return;
-    isRunning = false;
-    clearTimeout(tradeInterval);
-    
-    document.getElementById('btn-start').disabled = false;
-    document.getElementById('btn-start').style.background = '#10b981';
-    document.getElementById('btn-start').style.color = '#fff';
-
-    document.getElementById('btn-stop').disabled = true;
-    document.getElementById('btn-stop').style.background = '#334155';
-    document.getElementById('btn-stop').style.color = '#94a3b8';
-
-    document.getElementById('bot-status').innerText = "일시정지";
-    document.getElementById('bot-status').style.color = "#f59e0b";
-    document.getElementById('bot-status').style.border = "1px solid #f59e0b";
-    
-    saveBotState(); // [저장] 정지 상태 저장
-}
-
-function runTradeLoop() {
-    if(!isRunning) return;
-    executeTrade();
-    // 매매 후 상태 저장 (중요: 창 닫아도 최신 기록 유지)
-    saveBotState(); 
-    const nextTradeTime = Math.floor(Math.random() * 2500) + 1500;
-    tradeInterval = setTimeout(runTradeLoop, nextTradeTime);
-}
-
+// 실시간 매매에도 진화된 승률 적용
 function executeTrade() {
     const tbody = document.getElementById('history-list-body');
     if(!tbody) return;
@@ -197,7 +134,11 @@ function executeTrade() {
     const isBuy = Math.random() > 0.5;
     const typeText = isBuy ? `${currentCoinName} 롱` : `${currentCoinName} 숏`;
     const color = isBuy ? '#10b981' : '#ef4444';
-    const isWin = Math.random() > 0.35; 
+
+    // [여기!] 데이터 갯수에 따라 결정된 승률 사용
+    const winProb = calculateWinProbability();
+    const isWin = Math.random() < winProb; 
+    
     let profitAmount = 0;
 
     if(isWin) {
@@ -207,7 +148,7 @@ function executeTrade() {
         stats.losses++;
         profitAmount = -Math.floor(tradePrice * (Math.random() * 0.008 + 0.002));
     }
-    stats.total++;
+    stats.total++; // 데이터 하나 추가 (경험치 상승)
     stats.profit += profitAmount;
 
     const row = document.createElement('tr');
@@ -229,21 +170,104 @@ function executeTrade() {
     updateDashboard();
 }
 
+
+// ============================================
+// 유틸리티 및 UI 복구 함수들
+// ============================================
+
+function resumeBotUI() {
+    isRunning = true;
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-start').style.background = '#334155';
+    document.getElementById('btn-start').style.color = '#94a3b8';
+    
+    document.getElementById('btn-stop').disabled = false;
+    document.getElementById('btn-stop').style.background = '#ef4444';
+    document.getElementById('btn-stop').style.color = '#fff';
+
+    document.getElementById('bot-status').innerText = "가동중...";
+    document.getElementById('bot-status').style.color = "#10b981";
+    document.getElementById('bot-status').style.border = "1px solid #10b981";
+    document.getElementById('empty-msg').style.display = 'none';
+}
+
+function formatCoinPrice(price) {
+    const p = parseFloat(price);
+    if (isNaN(p)) return '-';
+    if (p >= 100) return Math.floor(p).toLocaleString(); 
+    else if (p >= 1) return p.toFixed(2); 
+    else return p.toFixed(4); 
+}
+
+async function fetchCurrentPrice() {
+    try {
+        const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=KRW-${currentCoinName}`);
+        if(res.data && res.data.length > 0) currentRealPrice = res.data[0].trade_price;
+        else currentRealPrice = getFallbackPrice(currentCoinName);
+    } catch (e) { currentRealPrice = getFallbackPrice(currentCoinName); }
+}
+
+async function startBot() {
+    if(isRunning) return;
+    document.getElementById('bot-status').innerText = "패턴 분석중...";
+    await fetchCurrentPrice(); 
+    resumeBotUI();
+    runTradeLoop();
+    saveBotState(); 
+}
+
+function stopBot() {
+    if(!isRunning) return;
+    isRunning = false;
+    clearTimeout(tradeInterval);
+    
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').style.background = '#10b981';
+    document.getElementById('btn-start').style.color = '#fff';
+
+    document.getElementById('btn-stop').disabled = true;
+    document.getElementById('btn-stop').style.background = '#334155';
+    document.getElementById('btn-stop').style.color = '#94a3b8';
+
+    document.getElementById('bot-status').innerText = "일시정지";
+    document.getElementById('bot-status').style.color = "#f59e0b";
+    document.getElementById('bot-status').style.border = "1px solid #f59e0b";
+    
+    saveBotState();
+}
+
+function runTradeLoop() {
+    if(!isRunning) return;
+    executeTrade();
+    saveBotState(); 
+    // 매매 속도: 데이터가 많을수록 더 신중하게(조금 천천히), 적을땐 빠르게
+    const speed = stats.total > 1000 ? 3000 : 2000; 
+    const nextTradeTime = Math.floor(Math.random() * 1000) + speed;
+    tradeInterval = setTimeout(runTradeLoop, nextTradeTime);
+}
+
 function updateDashboard() {
     const profitEl = document.getElementById('total-profit');
     const sign = stats.profit > 0 ? '+' : '';
     profitEl.innerText = `${sign}${stats.profit.toLocaleString()} KRW`;
     profitEl.style.color = stats.profit >= 0 ? '#10b981' : '#ef4444';
+    
     const winRate = stats.total === 0 ? 0 : ((stats.wins / stats.total) * 100).toFixed(1);
-    document.getElementById('win-rate').innerText = `${winRate}%`;
+    
+    // 승률 표시 부분에 현재 레벨(데이터 양)에 따른 상태 표시 추가
+    let level = "초기화";
+    if(stats.total > 5000) level = "마스터";
+    else if(stats.total > 1000) level = "고수";
+    else if(stats.total > 200) level = "중수";
+    else if(stats.total > 50) level = "초보";
+    
+    document.getElementById('win-rate').innerHTML = `${winRate}% <span style="font-size:0.7rem; color:#f59e0b; border:1px solid #f59e0b; padding:2px 4px; border-radius:4px; margin-left:5px;">${level}</span>`;
     document.getElementById('win-count').innerText = `${stats.wins}승`;
     document.getElementById('loss-count').innerText = `${stats.losses}패`;
 }
 
-// [추가] 로그 다운로드 기능 (구글 드라이브 대체)
 function downloadLog() {
     let csvContent = "data:text/csv;charset=utf-8,Time,Type,Price,Profit\n";
-    // 현재 화면에 있는 리스트만 저장
     const rows = document.querySelectorAll("#history-list-body tr");
     rows.forEach(row => {
         const cols = row.querySelectorAll("td");
@@ -255,7 +279,7 @@ function downloadLog() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${currentCoinName}_trading_log.csv`);
+    link.setAttribute("download", `${currentCoinName}_AI_Data_${stats.total}.csv`);
     document.body.appendChild(link);
     link.click();
 }
@@ -266,7 +290,6 @@ function clearHistory() {
     updateDashboard();
     document.getElementById('empty-msg').style.display = 'block';
     stopBot();
-    // 저장된 상태도 삭제
     localStorage.removeItem(`BOT_STATE_${currentCoinName}`);
 }
 
@@ -288,4 +311,12 @@ function initTradingView(symbol) {
     if (typeof TradingView !== 'undefined') {
         new TradingView.widget({ "container_id": "tv_chart", "symbol": symbol, "interval": "60", "theme": "dark", "autosize": true, "locale": "ko", "toolbar_bg": "#020617", "hide_side_toolbar": true, "allow_symbol_change": false, "save_image": false });
     }
+}
+
+function searchCoin() {
+    const input = document.getElementById('header-search-input');
+    if (!input) return;
+    let symbol = input.value.toUpperCase().trim();
+    if (!symbol) { alert("코인명을 입력해주세요."); return; }
+    location.href = `https://minetia.github.io/coin/modal.html?symbol=BINANCE:${symbol}USDT&coin=${symbol}`;
 }
