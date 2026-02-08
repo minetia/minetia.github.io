@@ -1,59 +1,54 @@
-<div style="width:100%;">
+<div style="width:100%; height:100%;">
     <table>
         <thead>
             <tr>
-                <th style="width:15%">시간</th>
+                <th style="width:20%">시간</th>
                 <th style="width:20%">코인</th>
-                <th style="width:15%">포지션</th>
+                <th style="width:15%">구분</th>
                 <th style="width:25%">가격</th>
-                <th style="width:25%">수익률</th>
+                <th style="width:20%">결과</th>
             </tr>
         </thead>
         <tbody id="history-list-body">
-            <tr><td colspan="5" style="padding:20px 0; color:#64748b;">데이터 로딩 중...</td></tr>
-        </tbody>
+            </tbody>
     </table>
 </div>
 
 <script>
-    // [핵심] 전역 함수로 선언해야 외부에서 호출 가능
-    window.renderHistory = function(page) {
-        const tbody = document.getElementById('history-list-body');
-        if (!tbody) return;
+    // 페이지 로드 시 즉시 실행되도록 설정
+    if (!window.renderHistory) {
+        window.renderHistory = function() {
+            const tbody = document.getElementById('history-list-body');
+            if (!tbody) return;
 
-        // 예시 데이터 (나중에는 서버에서 받아오시면 됩니다)
-        const dummyData = [
-            { time: '15:30', coin: 'BTC', side: '매수', price: '102.5M', profit: 0 },
-            { time: '14:20', coin: 'ETH', side: '매도', price: '3.8M', profit: 2.5 },
-            { time: '12:10', coin: 'XRP', side: '매도', price: '850', profit: -1.2 },
-            { time: '11:05', coin: 'SOL', side: '매수', price: '185K', profit: 0 },
-            { time: '09:40', coin: 'BTC', side: '매도', price: '101.2M', profit: 1.8 },
-            { time: '09:00', coin: 'DOGE', side: '매수', price: '180', profit: 0 },
-        ];
+            // 가짜 데이터 생성
+            const data = [
+                { t: '16:02', c: 'BTC', s: '매수', p: '102.7M', r: 0 },
+                { t: '15:45', c: 'ETH', s: '매도', p: '3.9M', r: 1.2 },
+                { t: '14:20', c: 'XRP', s: '매도', p: '860', r: -0.5 },
+                { t: '13:10', c: 'SOL', s: '매수', p: '190K', r: 0 },
+                { t: '12:00', c: 'BTC', s: '매도', p: '101.5M', r: 2.1 },
+            ];
 
-        let html = '';
-        dummyData.forEach(item => {
-            // 수익률 색상 처리 (0보다 크면 빨강/초록, 아니면 회색)
-            // style.css의 var(--up), var(--down) 변수 활용 가능하지만 직접 색 지정이 확실함
-            let color = '#94a3b8'; // 기본 회색
-            let sign = '';
-            
-            if (item.profit > 0) { color = '#10b981'; sign = '+'; } // 수익 (초록)
-            else if (item.profit < 0) { color = '#ef4444'; } // 손실 (빨강)
-
-            const sideColor = item.side === '매수' ? '#ef4444' : '#3b82f6'; // 매수:빨강, 매도:파랑
-
-            html += `
-                <tr>
-                    <td style="color:#cbd5e1;">${item.time}</td>
-                    <td style="font-weight:bold;">${item.coin}</td>
-                    <td style="color:${sideColor};">${item.side}</td>
-                    <td>${item.price}</td>
-                    <td style="color:${color}; font-weight:800;">${sign}${item.profit}%</td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = html;
-    };
+            let html = '';
+            data.forEach(d => {
+                const color = d.r > 0 ? '#10b981' : (d.r < 0 ? '#ef4444' : '#94a3b8');
+                const sideColor = d.s === '매수' ? '#ef4444' : '#3b82f6';
+                const sign = d.r > 0 ? '+' : '';
+                
+                html += `
+                    <tr>
+                        <td style="color:#cbd5e1">${d.t}</td>
+                        <td style="font-weight:bold">${d.c}</td>
+                        <td style="color:${sideColor}">${d.s}</td>
+                        <td>${d.p}</td>
+                        <td style="color:${color}; font-weight:800;">${sign}${d.r}%</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        };
+    }
+    // 스크립트가 로드되자마자 실행 시도
+    setTimeout(window.renderHistory, 100);
 </script>
