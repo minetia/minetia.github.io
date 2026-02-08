@@ -6,7 +6,7 @@
 
     <div style="display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 5px 15px; width: 60%; max-width: 300px;">
         <input type="text" id="header-search-input" placeholder="코인명 (예: BTC)" 
-               onkeyup="checkEnter(event)"
+               onkeyup="if(window.event.keyCode==13){searchCoin()}"
                style="background: transparent; border: none; color: #fff; width: 100%; outline: none; font-size: 0.9rem;">
         
         <i class="fas fa-search" onclick="searchCoin()" style="color: #94a3b8; cursor: pointer; margin-left: 5px;"></i>
