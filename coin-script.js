@@ -1,21 +1,12 @@
-/* coin-script.js (루트 폴더) */
+/* coin-script.js - 상세 페이지 및 AI 매매 */
 const ROOT_URL = "https://minetia.github.io/";
 
-// [상태 변수]
+// 상태 변수
 let currentCoinName = "BTC";
 let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
-
-// [핵심] 스마트 가격 포맷팅 함수 (여기도 추가)
-function formatCoinPrice(price) {
-    const p = parseFloat(price);
-    if (isNaN(p)) return '-';
-    if (p >= 100) return Math.floor(p).toLocaleString(); 
-    else if (p >= 1) return p.toFixed(2); 
-    else return p.toFixed(4); 
-}
 
 window.onload = async () => {
     await includeResources([
@@ -26,8 +17,10 @@ window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
     const symbol = params.get('symbol') || 'BINANCE:BTCUSDT';
     currentCoinName = params.get('coin') || 'BTC';
+    
     const titleEl = document.getElementById('coin-name-display');
     if(titleEl) titleEl.innerText = currentCoinName;
+
     initTradingView(symbol);
     updateAiVersion();
 };
@@ -38,27 +31,31 @@ async function includeResources(targets) {
     results.forEach(res => { const el = document.getElementById(res.id); if(el) el.innerHTML = res.html; });
 }
 
-// 실제 가격 가져오기
+// [1] 가격 포맷팅
+function formatCoinPrice(price) {
+    const p = parseFloat(price);
+    if (isNaN(p)) return '-';
+    if (p >= 100) return Math.floor(p).toLocaleString(); 
+    else if (p >= 1) return p.toFixed(2); 
+    else return p.toFixed(4); 
+}
+
+// [2] 실제 가격 가져오기
 async function fetchCurrentPrice() {
     try {
         const res = await axios.get(`https://api.upbit.com/v1/ticker?markets=KRW-${currentCoinName}`);
-        if(res.data && res.data.length > 0) {
-            currentRealPrice = res.data[0].trade_price;
-        } else {
-            currentRealPrice = getFallbackPrice(currentCoinName);
-        }
-    } catch (e) {
-        currentRealPrice = getFallbackPrice(currentCoinName);
-    }
+        if(res.data && res.data.length > 0) currentRealPrice = res.data[0].trade_price;
+        else currentRealPrice = getFallbackPrice(currentCoinName);
+    } catch (e) { currentRealPrice = getFallbackPrice(currentCoinName); }
 }
 
+// [3] 봇 제어
 async function startBot() {
     if(isRunning) return;
     document.getElementById('bot-status').innerText = "가격 분석중...";
     await fetchCurrentPrice(); 
     isRunning = true;
     
-    // UI 변경
     document.getElementById('btn-start').disabled = true;
     document.getElementById('btn-start').style.background = '#334155';
     document.getElementById('btn-start').style.color = '#94a3b8';
@@ -99,6 +96,7 @@ function runTradeLoop() {
     tradeInterval = setTimeout(runTradeLoop, nextTradeTime);
 }
 
+// [4] 거래 실행
 function executeTrade() {
     const tbody = document.getElementById('history-list-body');
     if(!tbody) return;
@@ -127,9 +125,7 @@ function executeTrade() {
     row.style.borderBottom = "1px solid #334155";
     row.style.animation = "fadeIn 0.5s";
 
-    // [핵심] 여기서 포맷팅 함수 사용!
     const displayPrice = formatCoinPrice(tradePrice);
-    
     const resultColor = isWin ? '#10b981' : '#ef4444';
     const resultText = isWin ? `+${profitAmount.toLocaleString()}` : `${profitAmount.toLocaleString()}`;
 
@@ -181,4 +177,13 @@ function initTradingView(symbol) {
     if (typeof TradingView !== 'undefined') {
         new TradingView.widget({ "container_id": "tv_chart", "symbol": symbol, "interval": "60", "theme": "dark", "autosize": true, "locale": "ko", "toolbar_bg": "#020617", "hide_side_toolbar": true, "allow_symbol_change": false, "save_image": false });
     }
+}
+
+// [5] 검색 기능
+function searchCoin() {
+    const input = document.getElementById('header-search-input');
+    if (!input) return;
+    let symbol = input.value.toUpperCase().trim();
+    if (!symbol) { alert("코인명을 입력해주세요."); return; }
+    location.href = `https://minetia.github.io/coin/modal.html?symbol=BINANCE:${symbol}USDT&coin=${symbol}`;
 }
