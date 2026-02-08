@@ -3,29 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI QUANT MASTER</title>
-    
-    <link rel="stylesheet" href="style.css">
-    
+    <title>AI QUANT</title>
+    <link rel="stylesheet" href="https://minetia.github.io/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="script.js"></script> 
+    <script src="https://minetia.github.io/script.js"></script>
 </head>
 <body>
 
 <div class="wrapper">
     <header id="header-placeholder"></header>
 
-    <div class="market-switch-container">
-        <div id="btn-domestic" class="market-btn active" onclick="switchMarket('DOMESTIC')">국내 시장</div>
-        <div id="btn-overseas" class="market-btn" onclick="switchMarket('OVERSEAS')">해외 시장</div>
+    <div class="exchange-bar">
+        
+        <div class="ex-icon active" onclick="selectExchange('UPBIT', this)">
+            <i class="fas fa-arrow-trend-up"></i> UPBIT
+        </div>
+        <div class="ex-icon" onclick="selectExchange('BITHUMB', this)">
+            <i class="fas fa-coins"></i> 빗썸
+        </div>
+        <div class="ex-icon" onclick="selectExchange('COINONE', this)">
+            <i class="fas fa-wallet"></i> 코인원
+        </div>
+        <div class="ex-icon" onclick="selectExchange('KORBIT', this)">
+            <i class="fas fa-landmark"></i> 코빗
+        </div>
+        <div class="ex-icon" onclick="selectExchange('GOPAX', this)">
+            <i class="fas fa-check-double"></i> 고팍스
+        </div>
+
+        <div style="width:1px; height:40px; background:#334155; margin:0 10px; align-self:center;"></div>
+
+        <div class="ex-icon" onclick="selectExchange('BINANCE', this)">
+            <i class="fas fa-globe"></i> BINANCE
+        </div>
+        <div class="ex-icon" onclick="selectExchange('COINBASE', this)">
+            <i class="fas fa-building-columns"></i> COINBASE
+        </div>
+        <div class="ex-icon" onclick="selectExchange('BYBIT', this)">
+            <i class="fas fa-bolt"></i> BYBIT
+        </div>
+        <div class="ex-icon" onclick="selectExchange('OKX', this)">
+            <i class="fas fa-o"></i> OKX
+        </div>
+        <div class="ex-icon" onclick="selectExchange('KRAKEN', this)">
+            <i class="fas fa-tentacle"></i> KRAKEN
+        </div>
+        <div class="ex-icon" onclick="selectExchange('KUCOIN', this)">
+            <i class="fas fa-cube"></i> KUCOIN
+        </div>
+        <div class="ex-icon" onclick="selectExchange('BITGET', this)">
+            <i class="fas fa-copy"></i> BITGET
+        </div>
+        <div class="ex-icon" onclick="selectExchange('GATEIO', this)">
+            <i class="fas fa-door-open"></i> GATE.IO
+        </div>
+        <div class="ex-icon" onclick="selectExchange('HTX', this)">
+            <i class="fas fa-h-square"></i> HTX
+        </div>
+        <div class="ex-icon" onclick="selectExchange('BITFINEX', this)">
+            <i class="fas fa-money-bill-wave"></i> BITFINEX
+        </div>
     </div>
 
-    <div class="exchange-bar" id="exchange-bar"></div>
-
     <main>
-        <h3 id="market-title">국내 실시간 시세</h3>
         <div id="coinList" class="grid-container"></div>
+        
         <div id="pagination-container" class="pagination"></div>
     </main>
 
@@ -33,19 +76,21 @@
 </div>
 
 <script>
-    // 인클루드 및 초기화 로직
     window.onload = async () => {
-        // script.js가 로드된 후 실행되도록 체크
         if(typeof includeResources === 'function') {
             await includeResources([
                 { id: 'header-placeholder', file: 'header.html' },
                 { id: 'nav-placeholder', file: 'nav.html' }
             ]);
         }
-        if(typeof switchMarket === 'function') {
-            switchMarket('DOMESTIC');
-        }
+        fetchCoinData('UPBIT'); // 시작은 업비트
     };
+
+    function selectExchange(ex, btn) {
+        document.querySelectorAll('.ex-icon').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        fetchCoinData(ex);
+    }
 </script>
 
 </body>
