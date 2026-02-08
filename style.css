@@ -1,53 +1,35 @@
-:root {
-    --bg: #020617;
-    --card: #1e293b;
-    --accent: #0ea5e9;
-    --border: #334155;
-    --up: #10b981;
+/* 뒤로가기 버튼: 차트를 가리지 않게 상단 헤더 영역에 고정 */
+.back-btn {
+    position: fixed;
+    top: 15px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    background: rgba(15, 23, 42, 0.8); /* 어두운 배경으로 가독성 확보 */
+    border: 1px solid var(--border);
+    border-radius: 8px; /* 둥근 사각형이 더 세련되어 보입니다 */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    cursor: pointer;
 }
 
-/* 1. 기본 여백 완전 제거 */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff; font-family: sans-serif; }
-
-.wrapper { display: flex; flex-direction: column; height: 100vh; }
-
-/* 2. 메인 영역 밀착 (gap 제거) */
-main { 
-    flex: 1; overflow-y: auto !important; 
-    padding: 0 12px 90px 12px; 
-    display: flex; flex-direction: column; 
-    gap: 0px !important; /* 요소 사이 공백 제거 */
+/* 차트 상단 여백 제거 및 밀착 */
+main {
+    flex: 1;
+    overflow-y: auto !important;
+    padding: 0 10px 100px 10px; /* 좌우 여백 살짝 축소 */
+    display: flex;
+    flex-direction: column;
+    gap: 0px !important;
 }
 
-/* 3. 차트 높이 및 하단 마진 축소 */
-.chart-box { 
-    width: 100%; height: 260px; border: 1px solid var(--border); 
-    border-top: none; margin-bottom: 8px !important; flex-shrink: 0; 
+.chart-box {
+    width: 100%;
+    height: 250px; /* 높이를 살짝 줄여서 아래 터미널을 위로 올림 */
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 8px !important;
 }
-
-/* 4. AI 터미널 압축 */
-.ai-terminal { 
-    background: #000; border: 2px solid var(--accent); border-radius: 12px; 
-    padding: 10px; margin-bottom: 0px !important; flex-shrink: 0; 
-}
-.log-screen { height: 80px; overflow-y: auto; color: var(--up); font-size: 0.75rem; margin-bottom: 8px; }
-
-/* 5. 자동매매 버튼 & 아이콘 */
-.ai-btn { 
-    width: 100%; height: 45px; background: var(--accent); color: #000; 
-    border: none; border-radius: 8px; font-weight: 800; 
-    display: flex; align-items: center; justify-content: center; gap: 8px; 
-}
-
-/* 6. 히스토리 제목 및 카드 (밀착형) */
-.history-title { font-size: 0.9rem; font-weight: 800; color: var(--accent); margin: 10px 0 5px 5px !important; }
-.history-card { 
-    background: var(--card); border-radius: 12px; border: 1px solid var(--border); 
-    padding: 2px; max-height: 180px; /* 리스트 높이 고정 */
-    overflow-y: auto; flex-shrink: 0; 
-}
-
-/* 7. 리스트 테이블 행 간격 초압축 */
-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-th, td { padding: 5px 2px !important; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
