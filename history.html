@@ -1,73 +1,59 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trade History</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; --up: #10b981; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; }
-        .wrapper { display: flex; flex-direction: column; height: 100vh; }
-        main { flex: 1; overflow-y: auto; padding: 15px 15px 100px 15px; }
-
-        .history-card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: fixed; }
-        th, td { padding: 15px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; white-space: nowrap; }
-        
-        /* 컬럼 고정 */
-        th:nth-child(1), td:nth-child(1) { width: 15%; }
-        th:nth-child(2), td:nth-child(2) { width: 20%; }
-        th:nth-child(3), td:nth-child(3) { width: 20%; }
-        th:nth-child(4), td:nth-child(4) { width: 20%; }
-        th:nth-child(5), td:nth-child(5) { width: 25%; }
-
-        .pagination { display: flex; justify-content: center; gap: 8px; padding: 20px; }
-        .page-num { padding: 8px 14px; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; }
-        .page-num.active { background: var(--accent); color: #000; font-weight: 800; }
-    </style>
-</head>
-<body>
-<div class="wrapper">
-    <header id="header-placeholder" style="height:65px;"></header>
-    <main>
-        <div style="font-size:1.2rem; font-weight:800; margin-bottom:15px; color:var(--accent);">TRADE HISTORY</div>
-        <div class="history-card">
-            <table>
-                <thead>
-                    <tr><th>날짜</th><th>코인</th><th>매수</th><th>매도</th><th>수익/손실</th></tr>
-                </thead>
-                <tbody id="historyBody"></tbody>
-            </table>
-            <div id="pagination" class="pagination"></div>
-        </div>
-    </main>
-    <footer id="nav-placeholder" style="height:75px;"></footer>
+<div style="width:100%;">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:15%">시간</th>
+                <th style="width:20%">코인</th>
+                <th style="width:15%">포지션</th>
+                <th style="width:25%">가격</th>
+                <th style="width:25%">수익률</th>
+            </tr>
+        </thead>
+        <tbody id="history-list-body">
+            <tr><td colspan="5" style="padding:20px 0; color:#64748b;">데이터 로딩 중...</td></tr>
+        </tbody>
+    </table>
 </div>
+
 <script>
-    const BASE = "https://minetia.github.io/";
-    const dummyData = Array.from({length: 50}, (_, i) => ({
-        d: '02/08', c: 'BTC', b: '84M', s: '86M', p: '+2.51%'
-    }));
+    // [핵심] 전역 함수로 선언해야 외부에서 호출 가능
+    window.renderHistory = function(page) {
+        const tbody = document.getElementById('history-list-body');
+        if (!tbody) return;
 
-    function render(page) {
-        const slice = dummyData.slice((page-1)*12, page*12);
-        document.getElementById('historyBody').innerHTML = slice.map(i => `
-            <tr><td>${i.d}</td><td style="font-weight:800;">${i.c}</td><td>${i.b}</td><td>${i.s}</td><td style="color:var(--up); font-weight:800;">${i.p}</td></tr>
-        `).join('');
+        // 예시 데이터 (나중에는 서버에서 받아오시면 됩니다)
+        const dummyData = [
+            { time: '15:30', coin: 'BTC', side: '매수', price: '102.5M', profit: 0 },
+            { time: '14:20', coin: 'ETH', side: '매도', price: '3.8M', profit: 2.5 },
+            { time: '12:10', coin: 'XRP', side: '매도', price: '850', profit: -1.2 },
+            { time: '11:05', coin: 'SOL', side: '매수', price: '185K', profit: 0 },
+            { time: '09:40', coin: 'BTC', side: '매도', price: '101.2M', profit: 1.8 },
+            { time: '09:00', coin: 'DOGE', side: '매수', price: '180', profit: 0 },
+        ];
 
-        let pg = '';
-        for(let i=1; i<=Math.ceil(dummyData.length/12); i++) {
-            pg += `<div class="page-num ${i===page?'active':''}" onclick="render(${i})">${i}</div>`;
-        }
-        document.getElementById('pagination').innerHTML = pg;
-    }
+        let html = '';
+        dummyData.forEach(item => {
+            // 수익률 색상 처리 (0보다 크면 빨강/초록, 아니면 회색)
+            // style.css의 var(--up), var(--down) 변수 활용 가능하지만 직접 색 지정이 확실함
+            let color = '#94a3b8'; // 기본 회색
+            let sign = '';
+            
+            if (item.profit > 0) { color = '#10b981'; sign = '+'; } // 수익 (초록)
+            else if (item.profit < 0) { color = '#ef4444'; } // 손실 (빨강)
 
-    window.onload = () => {
-        fetch(BASE+'header.html').then(r=>r.text()).then(d=>document.getElementById('header-placeholder').innerHTML=d);
-        fetch(BASE+'nav.html').then(r=>r.text()).then(d=>document.getElementById('nav-placeholder').innerHTML=d);
-        render(1);
+            const sideColor = item.side === '매수' ? '#ef4444' : '#3b82f6'; // 매수:빨강, 매도:파랑
+
+            html += `
+                <tr>
+                    <td style="color:#cbd5e1;">${item.time}</td>
+                    <td style="font-weight:bold;">${item.coin}</td>
+                    <td style="color:${sideColor};">${item.side}</td>
+                    <td>${item.price}</td>
+                    <td style="color:${color}; font-weight:800;">${sign}${item.profit}%</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
     };
 </script>
-</body>
-</html>
