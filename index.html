@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI QUANT MASTER</title>
-    <link rel="stylesheet" href="https://minetia.github.io/style.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://minetia.github.io/script.js"></script>
+    <script src="script.js"></script> 
 </head>
 <body>
 
@@ -19,14 +21,11 @@
         <div id="btn-overseas" class="market-btn" onclick="switchMarket('OVERSEAS')">해외 시장</div>
     </div>
 
-    <div class="exchange-bar" id="exchange-bar">
-        </div>
+    <div class="exchange-bar" id="exchange-bar"></div>
 
     <main>
-        <h3 id="market-title" style="margin-bottom:15px; font-size:1.1rem; padding-left:5px;">국내 실시간 시세 [UPBIT]</h3>
-        
+        <h3 id="market-title">국내 실시간 시세</h3>
         <div id="coinList" class="grid-container"></div>
-        
         <div id="pagination-container" class="pagination"></div>
     </main>
 
@@ -34,15 +33,18 @@
 </div>
 
 <script>
+    // 인클루드 및 초기화 로직
     window.onload = async () => {
+        // script.js가 로드된 후 실행되도록 체크
         if(typeof includeResources === 'function') {
             await includeResources([
                 { id: 'header-placeholder', file: 'header.html' },
                 { id: 'nav-placeholder', file: 'nav.html' }
             ]);
         }
-        // 시작하자마자 국내 시장 로드
-        switchMarket('DOMESTIC');
+        if(typeof switchMarket === 'function') {
+            switchMarket('DOMESTIC');
+        }
     };
 </script>
 
