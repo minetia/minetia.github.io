@@ -6,10 +6,10 @@ window.onload = async () => {
     await includeResources([
         { id: 'header-placeholder', file: 'header.html' },
         { id: 'nav-placeholder', file: 'nav.html' },
-        { id: 'history-placeholder', file: 'history.html' } // 여기!
+        { id: 'history-placeholder', file: 'history.html' } 
     ]);
 
-    // 2. 코인 이름 설정
+    // 2. 코인 이름 등 기본 설정
     const params = new URLSearchParams(window.location.search);
     const symbol = params.get('symbol') || 'BINANCE:BTCUSDT';
     const coinName = params.get('coin') || 'BTC';
@@ -20,10 +20,11 @@ window.onload = async () => {
     // 3. 차트 실행
     initTradingView(symbol);
 
-    // 4. 히스토리 데이터 채우기
+    // 4. 히스토리 데이터 채우기 (HTML 로드 후 실행)
     loadHistoryData();
 };
 
+// 인클루드 함수
 async function includeResources(targets) {
     const promises = targets.map(t => 
         fetch(`${ROOT_URL}${t.file}`).then(r => r.text()).then(html => ({ id: t.id, html }))
@@ -35,7 +36,7 @@ async function includeResources(targets) {
     });
 }
 
-// [데이터 생성] history.html 안에 있는 tbody를 찾아서 채움
+// [데이터 생성]
 function loadHistoryData() {
     const tbody = document.getElementById('history-list-body');
     if(!tbody) return;
@@ -44,30 +45,30 @@ function loadHistoryData() {
     let now = new Date();
 
     for(let i=0; i<15; i++) {
-        now.setSeconds(now.getSeconds() - Math.floor(Math.random() * 45));
+        now.setSeconds(now.getSeconds() - Math.floor(Math.random() * 60));
         const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
         
-        const isBuy = Math.random() > 0.5;
+        const isBuy = Math.random() > 0.5; // 50:50 확률
         const type = isBuy ? 'AI 매수' : 'AI 매도';
         const color = isBuy ? '#ef4444' : '#3b82f6'; // 빨강/파랑
-        const bg = isBuy ? 'rgba(239, 68, 68, 0.05)' : 'rgba(59, 130, 246, 0.05)';
         
-        // 가격 랜덤 (9800만원 근처)
-        const price = (98000000 + Math.floor(Math.random() * 300000)).toLocaleString();
+        // 가격 랜덤 생성 (천단위 콤마)
+        const price = (98000000 + Math.floor(Math.random() * 500000)).toLocaleString();
         const amount = (Math.random() * 0.5 + 0.001).toFixed(4);
 
         html += `
-            <tr style="background:${bg}; border-bottom:1px solid #1e293b;">
-                <td style="padding:10px; color:#94a3b8; text-align:center;">${timeStr}</td>
-                <td style="padding:10px; color:${color}; font-weight:800; text-align:center;">${type}</td>
-                <td style="padding:10px; color:#fff; font-weight:bold; text-align:center;">${price}</td>
-                <td style="padding:10px; color:#cbd5e1; text-align:center;">${amount}</td>
+            <tr style="border-bottom:1px solid #334155;">
+                <td style="padding:12px; color:#94a3b8; text-align:center;">${timeStr}</td>
+                <td style="padding:12px; color:${color}; font-weight:800; text-align:center;">${type}</td>
+                <td style="padding:12px; color:#fff; font-weight:bold; text-align:center;">${price}</td>
+                <td style="padding:12px; color:#cbd5e1; text-align:center;">${amount}</td>
             </tr>
         `;
     }
     tbody.innerHTML = html;
 }
 
+// 차트 설정
 function initTradingView(symbol) {
     if (typeof TradingView !== 'undefined') {
         new TradingView.widget({
