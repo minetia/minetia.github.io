@@ -6,10 +6,9 @@
     <title>AI QUANT TRADING</title>
     
     <link rel="stylesheet" href="https://minetia.github.io/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script src="https://minetia.github.io/script.js"></script>
 </head>
 <body>
@@ -18,14 +17,14 @@
     <header id="header-placeholder"></header>
 
     <main>
-        <div class="tab-menu">
-            <button class="tab-btn active" onclick="setMarketType('krw', this)">국내 시장 (UPBIT)</button>
-            <button class="tab-btn" onclick="setMarketType('global', this)">해외 시장 (BINANCE)</button>
+        <div class="tab-menu" id="main-tab-menu">
+            <button class="tab-btn active" onclick="loadList('ex_kr.html', this)">국내 5대 거래소</button>
+            <button class="tab-btn" onclick="loadList('ex_global.html', this)">해외 10대 거래소</button>
         </div>
 
-        <div id="coinList" class="grid-container">
-            <div style="grid-column: span 2; text-align: center; padding: 20px; color: #64748b;">
-                <i class="fas fa-circle-notch fa-spin"></i> 데이터 로딩 중...
+        <div id="list-placeholder" class="grid-container">
+            <div style="grid-column: span 2; text-align: center; padding: 50px; color: #64748b;">
+                <i class="fas fa-circle-notch fa-spin"></i> 로딩 중...
             </div>
         </div>
     </main>
@@ -36,24 +35,47 @@
 <script>
     // 페이지 로드 시 실행
     window.onload = async () => {
-        // 1. 헤더와 네비게이션 바 불러오기
-        await includeResources([
-            { id: 'header-placeholder', file: 'header.html' },
-            { id: 'nav-placeholder', file: 'nav.html' }
-        ]);
+        // 1. 헤더와 하단 메뉴(Nav) 불러오기
+        if(typeof includeResources === 'function') {
+            await includeResources([
+                { id: 'header-placeholder', file: 'header.html' },
+                { id: 'nav-placeholder', file: 'nav.html' }
+            ]);
+        }
 
-        // 2. 초기 데이터 로드 (원화 마켓)
-        fetchCoinData('krw');
+        // 2. 초기 화면: 국내 5대 거래소 목록(ex_kr.html) 불러오기
+        loadList('ex_kr.html');
     };
 
-    // 탭 전환 함수
-    function setMarketType(type, btn) {
-        // 모든 버튼 비활성화
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        // 클릭한 버튼 활성화
-        btn.classList.add('active');
-        // 데이터 다시 불러오기
-        fetchCoinData(type);
+    // [핵심] 거래소 목록 파일(.html)을 중앙에 끼워넣는 함수
+    async function loadList(filename, btn) {
+        // 탭 버튼 스타일 활성화 처리
+        if(btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        const container = document.getElementById('list-placeholder');
+        const tabMenu = document.getElementById('main-tab-menu');
+
+        // 혹시 상세 시세 보다가 돌아왔을 때를 대비해 탭 메뉴 다시 보이기
+        if(tabMenu) tabMenu.style.display = 'flex';
+
+        try {
+            // 로딩 애니메이션 표시
+            container.innerHTML = `<div style="grid-column:span 2; text-align:center; padding:50px; color:#666;"><i class="fas fa-spinner fa-spin"></i> 목록 불러오는 중...</div>`;
+            
+            // 파일 Fetch (ex_kr.html 또는 ex_global.html)
+            const response = await fetch(`https://minetia.github.io/${filename}`);
+            if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
+            
+            const html = await response.text();
+            container.innerHTML = html;
+            
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = `<div style="color:red; text-align:center; padding:20px;">목록 로드 실패<br>(${filename} 파일이 있는지 확인해주세요)</div>`;
+        }
     }
 </script>
 
