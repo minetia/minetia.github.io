@@ -1,63 +1,57 @@
 /* style.css */
-
-/* 메인 영역: 차트 위 공백 제거 & 내부 요소 밀착 */
-main {
-    flex: 1;
-    overflow-y: auto !important;
-    padding: 0 10px 90px 10px; /* 상단 0, 하단 90(메뉴바 공간) */
-    display: flex;
-    flex-direction: column;
-    gap: 0px !important; /* 요소 사이 틈 없음 */
+:root {
+    --bg: #020617;     /* 배경: 아주 어두운 남색 */
+    --card: #1e293b;   /* 카드: 어두운 회색 */
+    --accent: #0ea5e9; /* 포인트: 하늘색 */
+    --border: #334155; /* 테두리 */
+    --up: #10b981;     /* 상승: 초록 */
+    --down: #ef4444;   /* 하락: 빨강 */
 }
 
-/* 차트: 높이 260px 고정 */
-.chart-box {
-    width: 100%;
-    height: 260px;
-    border: 1px solid var(--border);
-    border-top: none;
-    margin-bottom: 5px !important; /* 터미널과 5px 간격 */
-    flex-shrink: 0;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: #fff; font-family: sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* [핵심] 바둑판 레이아웃 (2칸씩 배치) */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 1:1 비율로 2개 */
+    gap: 12px; /* 카드 사이 간격 */
+    padding: 15px;
+    padding-bottom: 100px; /* 하단 메뉴 가림 방지 */
 }
 
-/* 자동매매 터미널: 높이 최소화 */
-.ai-terminal {
-    background: #000;
-    border: 2px solid var(--accent);
-    border-radius: 12px;
-    padding: 8px; /* 패딩 줄임 */
-    margin-bottom: 0px !important;
-    flex-shrink: 0;
-}
-
-/* 로그 창 높이 줄임 (70px) */
-.log-screen {
-    height: 70px; 
-    overflow-y: auto;
-    color: var(--up);
-    font-size: 0.75rem;
-    margin-bottom: 5px;
-}
-
-/* 리스트 제목: 터미널 바로 밑에 붙음 */
-.history-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: var(--accent);
-    margin: 8px 0 4px 5px !important;
-}
-
-/* 히스토리 리스트: 남은 공간 꽉 채우기 */
-.history-card {
+/* [핵심] 코인 카드 (네모난 타일) */
+.coin-item {
     background: var(--card);
-    border-radius: 12px;
     border: 1px solid var(--border);
-    padding: 2px;
-    height: 180px; /* 높이 고정 (화면 밖으로 안 밀리게) */
-    overflow-y: auto; /* 내부 스크롤 */
-    flex-shrink: 0;
+    border-radius: 16px; /* 둥근 모서리 */
+    padding: 20px 10px;  /* 안쪽 여백 */
+    display: flex;
+    flex-direction: column; /* 위아래로 정렬 */
+    align-items: center;    /* 가운데 정렬 */
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-/* 테이블 행 간격 초압축 */
-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-th, td { padding: 4px 2px !important; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+/* 눌렀을 때 쏙 들어가는 효과 */
+.coin-item:active {
+    transform: scale(0.96);
+    background: #334155;
+}
+
+/* 텍스트 스타일 */
+.coin-symbol { color: #94a3b8; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+.coin-price { color: #fff; font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+.coin-change { font-size: 0.9rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.2); }
+
+/* 상승/하락 색상 */
+.text-up { color: var(--up); }
+.text-down { color: var(--down); }
+
+/* 탭 메뉴 스타일 */
+.tab-menu { display: flex; gap: 10px; padding: 10px 15px 0 15px; }
+.tab-btn { flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: #64748b; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 10px rgba(14, 165, 233, 0.4); }
