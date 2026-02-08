@@ -1,32 +1,58 @@
 <div class="trade-section">
-    <div style="padding: 15px; background: linear-gradient(135deg, #1e293b, #0f172a); border-bottom: 1px solid #334155;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-robot" style="color:#0ea5e9;"></i>
-                <div>
-                    <span id="ai-version-display" style="font-weight:bold; font-size:1rem; color:#fff;">Neuro-Trading V5.0</span>
+    
+    <div class="dashboard-box" style="padding: 20px; background: linear-gradient(135deg, #1e293b, #0f172a); margin-bottom: 15px; border-bottom: 1px solid #334155;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <div style="font-weight:bold; color:#fff; font-size:1.1rem;" id="ai-version-display">Neuro-Bot V5.0</div>
+            <div id="bot-status" style="font-size:0.8rem; padding: 4px 10px; border-radius: 4px; background: #334155; color: #94a3b8;">대기중</div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; gap: 10px;">
+            <div style="flex:1; background:rgba(0,0,0,0.3); padding:15px; border-radius:12px; text-align:center;">
+                <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:5px;">총 실현 손익</div>
+                <div id="total-profit" style="font-size:1.2rem; font-weight:800; color:#fff;">0 KRW</div>
+            </div>
+            <div style="flex:1; background:rgba(0,0,0,0.3); padding:15px; border-radius:12px; text-align:center;">
+                <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:5px;">승률 (Win/Lose)</div>
+                <div style="font-size:1.2rem; font-weight:800; color:#fff;">
+                    <span id="win-rate">0%</span>
+                    <div style="font-size:0.7rem; color:#64748b; font-weight:normal; margin-top:2px;">
+                        <span id="win-count" style="color:#10b981">0승</span> / <span id="loss-count" style="color:#ef4444">0패</span>
+                    </div>
                 </div>
             </div>
-            <span style="background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:bold; animation: blink 2s infinite;">LIVE</span>
         </div>
     </div>
+
+    <div style="padding: 0 15px 15px 15px; display:flex; gap:10px;">
+        <button onclick="startBot()" id="btn-start" style="flex:1; padding:12px; border:none; border-radius:8px; background:#10b981; color:#fff; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow: 0 4px 0 #059669; transition:0.1s;">
+            <i class="fas fa-play"></i> START
+        </button>
+        <button onclick="stopBot()" id="btn-stop" style="flex:1; padding:12px; border:none; border-radius:8px; background:#334155; color:#94a3b8; font-weight:bold; font-size:1rem; cursor:not-allowed; box-shadow: 0 4px 0 #1e293b; transition:0.1s;" disabled>
+            <i class="fas fa-stop"></i> STOP
+        </button>
+    </div>
     
-    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-        <thead>
-            <tr>
-                <th width="20%">시간</th>
-                <th width="25%">포지션</th>
-                <th width="30%">체결가</th>
-                <th width="25%">수량</th>
-            </tr>
-        </thead>
-        <tbody id="history-list-body">
-            </tbody>
-    </table>
-
-    <div id="history-pagination" class="history-pagination"></div>
+    <div style="background:#0f172a; min-height:300px;">
+        <div style="padding:10px 15px; border-top:1px solid #334155; border-bottom:1px solid #334155; color:#94a3b8; font-size:0.8rem; display:flex; justify-content:space-between;">
+            <span>실시간 체결 로그</span>
+            <button onclick="clearHistory()" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:0.7rem;">기록 초기화</button>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+                <tr style="background:#1e293b; color:#64748b;">
+                    <th style="padding:10px; text-align:center;">시간</th>
+                    <th style="padding:10px; text-align:center;">포지션</th>
+                    <th style="padding:10px; text-align:center;">체결가</th>
+                    <th style="padding:10px; text-align:center;">결과</th>
+                </tr>
+            </thead>
+            <tbody id="history-list-body">
+                </tbody>
+        </table>
+        <div id="empty-msg" style="text-align:center; padding:50px; color:#64748b;">
+            <i class="fas fa-robot" style="font-size:2rem; margin-bottom:10px;"></i><br>
+            START 버튼을 눌러<br>자동매매를 시작하세요.
+        </div>
+    </div>
 </div>
-
-<style>
-    @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
-</style>
