@@ -1,4 +1,4 @@
-/* coin-script.js (전체 복사해서 덮어쓰세요) */
+/* coin-script.js - (현실 수수료 반영: 업비트 0.1% / 바이낸스 0.2%) */
 const ROOT_URL = "https://minetia.github.io/";
 
 // 전역 변수
@@ -7,6 +7,11 @@ let isRunning = false;
 let tradeInterval = null;
 let currentRealPrice = 0;
 let stats = { profit: 0, wins: 0, losses: 0, total: 0 };
+let currentFeeRate = 0.001; // 기본 수수료 (업비트 0.1%)
+
+// 1회 투자금 설정
+const MIN_BET = 50000000; 
+const MAX_BET = 100000000;
 
 window.onload = async () => {
     await includeResources([
@@ -15,9 +20,20 @@ window.onload = async () => {
         { id: 'history-placeholder', file: 'history.html' } 
     ]);
     const params = new URLSearchParams(window.location.search);
+    // URL에서 심볼과 코인명 가져오기
     const symbol = params.get('symbol') || 'BINANCE:BTCUSDT';
     currentCoinName = params.get('coin') || 'BTC';
     
+    // [핵심] 심볼에 따라 수수료 결정 (현실 반영)
+    // USDT나 BINANCE가 포함되어 있으면 해외(0.2%), 아니면 국내(0.1%)
+    if (symbol.includes('USDT') || symbol.includes('BINANCE') || symbol.includes('USD')) {
+        currentFeeRate = 0.002; // 바이낸스 왕복 0.2%
+        console.log("해외 거래소 수수료 적용 (0.2%)");
+    } else {
+        currentFeeRate = 0.001; // 업비트 왕복 0.1%
+        console.log("국내 거래소 수수료 적용 (0.1%)");
+    }
+
     const titleEl = document.getElementById('coin-name-display');
     if(titleEl) titleEl.innerText = currentCoinName;
 
@@ -47,11 +63,9 @@ function getInvestmentAmount() {
     return Number(val) || 50000000;
 }
 
-// [NEW] 초록 점 제어 함수
 function updateLiveDot(active) {
     const dot = document.getElementById('live-dot');
     if(dot) {
-        // 켜지면 초록색 + 그림자, 꺼지면 회색
         dot.style.background = active ? '#10b981' : '#64748b';
         dot.style.boxShadow = active ? '0 0 8px #10b981' : 'none';
     }
@@ -85,7 +99,7 @@ async function loadBotState() {
     }
 
     if (state.isRunning) {
-        document.getElementById('bot-status').innerText = "자산 평가중...";
+        document.getElementById('bot-status').innerText = "수수료 정산중...";
         await fetchCurrentPrice(); 
 
         const now = new Date().getTime();
@@ -138,7 +152,10 @@ function showRecoveryMessage(count) {
     }, 5000);
 }
 
-// 수익 계산
+// ============================================
+// 수익 및 수수료 계산 (현실 반영)
+// ============================================
+
 function calculateWinProbability() {
     const totalData = stats.total;
     if (totalData < 50) return 0.50;        
@@ -151,20 +168,33 @@ function calculateWinProbability() {
 
 function calculateTradeResult(isWin) {
     const userBet = getInvestmentAmount();
-    const profitPercent = (Math.random() * 0.007) + 0.008; 
     
-    let profit = 0;
-    let percent = 0;
+    // 수수료 계산 (투자금 * 수수료율)
+    // 예: 1억 * 0.001(0.1%) = 10만원
+    const fee = Math.floor(userBet * currentFeeRate);
+
+    // 차트 변동폭 (단타): 0.6% ~ 1.5% 움직임
+    const movePercentRaw = (Math.random() * 0.009) + 0.006; 
+    
+    let grossProfit = 0; // 수수료 떼기 전 수익
+    let netProfit = 0;   // 수수료 뗀 후 최종 수익 (내 주머니)
 
     if (isWin) {
-        profit = Math.floor(userBet * profitPercent);
-        percent = profitPercent * 100;
+        grossProfit = Math.floor(userBet * movePercentRaw);
+        // [핵심] 이익에서 수수료 차감
+        netProfit = grossProfit - fee; 
     } else {
-        const lossPercent = (Math.random() * 0.005) + 0.005; 
-        profit = -Math.floor(userBet * lossPercent);
-        percent = -lossPercent * 100;
+        // 손실 발생 시에도 수수료는 나감 (이중 손실)
+        const lossPercentRaw = (Math.random() * 0.005) + 0.005; 
+        grossProfit = -Math.floor(userBet * lossPercentRaw);
+        // [핵심] 손실 + 수수료 = 더 큰 손실
+        netProfit = grossProfit - fee;
     }
-    return { profit: profit, percent: percent.toFixed(2) };
+
+    // 최종 수익률 계산 (%)
+    const netPercent = (netProfit / userBet) * 100;
+
+    return { profit: netProfit, percent: netPercent.toFixed(2), fee: fee };
 }
 
 function simulateBackgroundTrades(count) {
@@ -196,9 +226,11 @@ function executeTrade() {
     const winProb = calculateWinProbability();
     const isWin = Math.random() < winProb; 
     
+    // 결과 계산 (수수료 포함)
     const resultData = calculateTradeResult(isWin);
     const profitAmount = resultData.profit;
     const profitPercent = resultData.percent;
+    // const feePaid = resultData.fee; // 필요시 사용 가능
 
     stats.total++; 
     if(isWin) stats.wins++; else stats.losses++;
@@ -209,8 +241,11 @@ function executeTrade() {
     row.style.animation = "fadeIn 0.5s";
 
     const displayPrice = formatCoinPrice(tradePrice);
-    const resultColor = isWin ? '#10b981' : '#ef4444';
-    const plusSign = isWin ? '+' : '';
+    
+    // 수익이면 초록, 손실이면 빨강 (0보다 작으면 빨강)
+    const isNetWin = profitAmount > 0;
+    const resultColor = isNetWin ? '#10b981' : '#ef4444';
+    const plusSign = isNetWin ? '+' : '';
     
     const resultHTML = `
         <div>${plusSign}${profitAmount.toLocaleString()}</div>
@@ -236,7 +271,7 @@ function executeTrade() {
 // 유틸리티
 function resumeBotUI() {
     isRunning = true;
-    updateLiveDot(true); // 점 켜기
+    updateLiveDot(true);
 
     document.getElementById('btn-start').disabled = true;
     document.getElementById('btn-start').style.background = '#334155';
@@ -282,7 +317,7 @@ async function startBot() {
 function stopBot() {
     if(!isRunning) return;
     isRunning = false;
-    updateLiveDot(false); // 점 끄기
+    updateLiveDot(false);
 
     clearTimeout(tradeInterval);
     
