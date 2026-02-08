@@ -1,4 +1,6 @@
 /* style.css */
+
+/* ... (기존 변수 유지) ... */
 :root {
     --bg: #020617;
     --card: #1e293b;
@@ -6,76 +8,48 @@
     --border: #334155;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; }
-
-/* 레이아웃 */
-.wrapper { display: flex; flex-direction: column; height: 100vh; }
-
-header { 
-    height: 60px; border-bottom: 1px solid var(--border); 
-    display: flex; align-items: center; padding-left: 15px; 
-    font-weight: 800; font-size: 1.2rem; flex-shrink: 0; 
-}
-
-/* [1] 거래소 아이콘 바 (가로 스크롤) */
-.exchange-bar {
-    display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px;
-    background: #0f172a; border-bottom: 1px solid var(--border);
-    white-space: nowrap; scrollbar-width: none; flex-shrink: 0;
-}
-.exchange-bar::-webkit-scrollbar { display: none; }
-
-.ex-icon {
-    min-width: 65px; height: 65px;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    font-size: 0.7rem; color: #94a3b8; cursor: pointer; transition: 0.2s;
-}
-.ex-icon.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
-.ex-icon.active i { color: #000; }
-.ex-icon i { font-size: 1.3rem; margin-bottom: 5px; color: #fff; }
-
-/* [2] 메인 영역 (여기가 핵심!) */
-main {
-    flex: 1;
-    overflow-y: auto; /* 내부 스크롤 */
+/* [NEW] 시장 선택 버튼 컨테이너 */
+.market-switch-container {
+    display: flex;
     padding: 15px;
-    
-    /* [핵심 수정] 하단 여백을 150px로 늘려서 숫자가 메뉴바 위로 올라오게 함 */
-    padding-bottom: 150px !important; 
+    gap: 10px;
+    background: #0f172a;
 }
 
-.grid-container {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+.market-btn {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #1e293b; /* 비활성 색상 */
+    color: #94a3b8;
+    border: 1px solid var(--border);
+    transition: 0.2s;
 }
 
-.coin-item {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;
+/* 활성화 된 버튼 스타일 (스크린샷 참조) */
+.market-btn.active {
+    background: var(--accent); /* 파란색 */
+    color: #fff; /* 흰색 글씨 */
+    border-color: var(--accent);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
 }
 
-/* [3] 페이지 번호 */
-.pagination {
-    display: flex; justify-content: center; gap: 8px;
-    margin-top: 30px; 
-    margin-bottom: 10px; /* 번호 아래에도 약간 여백 */
-    flex-wrap: wrap;
-}
-.page-btn {
-    width: 35px; height: 35px; background: var(--card); border: 1px solid var(--border);
-    color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
-}
-.page-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+/* 기존 스타일 유지 + 수정 */
+header { position: fixed; top: 0; left: 0; width: 100%; z-index: 10000; background: #0f172a; }
+main { padding-top: 130px; padding-bottom: 80px; padding-left:15px; padding-right:15px; } /* 상단 여백 확보 */
+.wrapper { padding-top: 60px; } 
 
-/* [4] 하단 메뉴바 (고정) */
-footer {
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    height: 70px; background: #0f172a; border-top: 1px solid var(--border);
-    z-index: 9999; display: flex; justify-content: space-around; align-items: center;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+/* 거래소 바 */
+.exchange-bar {
+    display: flex; overflow-x: auto; gap: 8px; padding: 0 15px 15px 15px;
+    background: #0f172a; border-bottom: 1px solid var(--border);
+    white-space: nowrap; scrollbar-width: none;
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; font-size: 0.7rem; cursor: pointer; text-decoration: none; }
-.nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
-.nav-item.active { color: var(--accent); }
+.ex-icon {
+    padding: 8px 16px; border-radius: 20px; background: #1e293b; 
+    border: 1px solid var(--border); color: #94a3b8; font-size: 0.8rem; cursor: pointer;
+}
+.ex-icon.active { background: #1e293b; border: 1px solid var(--accent); color: var(--accent); font-weight:bold; }
