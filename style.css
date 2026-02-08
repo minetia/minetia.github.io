@@ -1,4 +1,4 @@
-/* style.css - 최종 완성본 */
+/* style.css */
 :root {
     --bg: #020617;
     --card: #1e293b;
@@ -9,97 +9,69 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: #fff; font-family: sans-serif; overflow-x: hidden; }
+body { background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; } /* body 스크롤 막음 */
 
-/* 레이아웃 구조 */
-.wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+/* 전체 레이아웃 */
+.wrapper { display: flex; flex-direction: column; height: 100vh; }
 
-/* [1] 헤더 */
-header { 
-    height: 60px; 
-    border-bottom: 1px solid var(--border); 
-    display: flex; align-items: center; padding-left: 15px; 
-    font-weight: 800; font-size: 1.2rem; 
-    position: sticky; top: 0; background: var(--bg); z-index: 5000;
-}
+header { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding-left: 15px; font-weight: 800; font-size: 1.2rem; flex-shrink: 0; }
 
-/* [2] 상단 거래소 아이콘 (가로 스크롤) */
+/* 거래소 아이콘 바 */
 .exchange-bar {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding: 10px 15px;
-    background: #0f172a;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    scrollbar-width: none;
+    display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px;
+    background: #0f172a; border-bottom: 1px solid var(--border);
+    white-space: nowrap; scrollbar-width: none; flex-shrink: 0;
 }
 .exchange-bar::-webkit-scrollbar { display: none; }
 
 .ex-icon {
-    min-width: 60px; height: 60px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    display: flex; flex-direction: column;
+    min-width: 65px; height: 65px; /* 크기 살짝 키움 */
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    font-size: 0.7rem; color: #94a3b8;
-    cursor: pointer; transition: 0.2s;
+    font-size: 0.7rem; color: #94a3b8; cursor: pointer; transition: 0.2s;
 }
-.ex-icon.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.ex-icon.active { background: var(--accent); color: #000; font-weight:bold; border-color: var(--accent); }
 .ex-icon.active i { color: #000; }
-.ex-icon i { font-size: 1.2rem; margin-bottom: 5px; color: #fff; }
+.ex-icon i { font-size: 1.3rem; margin-bottom: 5px; color: #fff; }
 
-/* [3] 메인 영역 (코인 리스트) */
-main {
-    flex: 1;
-    /* [중요] 하단 메뉴바 높이만큼 여백을 줘서 가려짐 방지 */
-    padding: 15px 15px 90px 15px; 
+/* [중요] 메인 영역 스크롤 설정 */
+main { 
+    flex: 1; 
+    overflow-y: auto; /* 내부 스크롤 허용 */
+    padding: 15px; 
+    
+    /* [핵심 해결책] 하단 메뉴바(70px)보다 더 넓은 120px 여백을 줌 */
+    padding-bottom: 120px; 
 }
 
-.grid-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2열 */
-    gap: 10px;
-}
+.grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 .coin-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-    cursor: pointer;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;
 }
-.coin-item:active { transform: scale(0.98); background: #334155; }
 
-/* [4] 페이지 번호 */
+/* 페이지 번호 */
 .pagination {
-    display: flex; justify-content: center; gap: 5px;
-    margin-top: 20px; flex-wrap: wrap;
+    display: flex; justify-content: center; gap: 8px;
+    margin-top: 30px; /* 위쪽 여백 */
+    margin-bottom: 10px; 
+    flex-wrap: wrap;
 }
 .page-btn {
-    width: 35px; height: 35px;
-    background: var(--card); border: 1px solid var(--border);
-    color: #94a3b8; border-radius: 8px; cursor: pointer;
+    width: 32px; height: 32px; background: var(--card); border: 1px solid var(--border);
+    color: #94a3b8; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
 }
-.page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
+.page-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
 
-/* [5] 하단 메뉴바 (완벽 고정) */
+/* 하단 메뉴바 고정 */
 footer {
-    position: fixed; /* [핵심] 화면에 고정 */
-    bottom: 0;       /* 바닥에 붙임 */
-    left: 0;
-    width: 100%;     /* 가로 꽉 채움 */
-    height: 70px;
-    background: #0f172a; /* 배경색 필수 (투명하면 뒤가 비침) */
-    border-top: 1px solid var(--border);
-    z-index: 9999;   /* [핵심] 제일 위에 뜸 */
-    display: flex; justify-content: space-around; align-items: center;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.3); /* 그림자 효과 */
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    height: 70px; background: #0f172a; border-top: 1px solid var(--border);
+    z-index: 9999; display: flex; justify-content: space-around; align-items: center;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5); /* 그림자로 구분감 줌 */
 }
-
-/* 하단 아이콘 스타일 */
 .nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; font-size: 0.7rem; cursor: pointer; text-decoration: none; }
 .nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
 .nav-item.active { color: var(--accent); }
