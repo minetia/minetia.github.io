@@ -1,5 +1,6 @@
-/* style.css - (깨짐 수정 완료판) */
+/* style.css */
 
+/* ... (기존 변수 유지) ... */
 :root {
     --bg: #020617;
     --card: #1e293b;
@@ -7,45 +8,12 @@
     --border: #334155;
 }
 
-/* [중요 1] 배경색 강제 고정 (흰색 배경 방지) */
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg) !important; /* 강제 적용 */
-    color: #fff;
-    font-family: sans-serif;
-    overflow-x: hidden;
-}
-
-.wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: var(--bg); /* 래퍼에도 배경색 적용 */
-}
-
-/* [중요 2] 헤더 고정 및 스타일 */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: #0f172a; /* 헤더 배경색 */
-    border-bottom: 1px solid var(--border);
-    z-index: 10000;
-}
-
-/* [중요 3] 국내/해외 탭 버튼 스타일 */
+/* [NEW] 시장 선택 버튼 컨테이너 */
 .market-switch-container {
-    /* 헤더 높이(60px)만큼 위에서 떨어져야 함 */
-    margin-top: 60px; 
     display: flex;
     padding: 15px;
     gap: 10px;
-    background-color: var(--bg); /* 배경색 일치 */
+    background: #0f172a;
 }
 
 .market-btn {
@@ -55,98 +23,33 @@ header {
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    background: #1e293b;
+    background: #1e293b; /* 비활성 색상 */
     color: #94a3b8;
     border: 1px solid var(--border);
     transition: 0.2s;
 }
 
+/* 활성화 된 버튼 스타일 (스크린샷 참조) */
 .market-btn.active {
-    background: var(--accent);
-    color: #fff;
+    background: var(--accent); /* 파란색 */
+    color: #fff; /* 흰색 글씨 */
     border-color: var(--accent);
     box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
 }
 
-/* 거래소 아이콘 바 */
+/* 기존 스타일 유지 + 수정 */
+header { position: fixed; top: 0; left: 0; width: 100%; z-index: 10000; background: #0f172a; }
+main { padding-top: 130px; padding-bottom: 80px; padding-left:15px; padding-right:15px; } /* 상단 여백 확보 */
+.wrapper { padding-top: 60px; } 
+
+/* 거래소 바 */
 .exchange-bar {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 0 15px 15px 15px;
-    background-color: var(--bg);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    scrollbar-width: none;
+    display: flex; overflow-x: auto; gap: 8px; padding: 0 15px 15px 15px;
+    background: #0f172a; border-bottom: 1px solid var(--border);
+    white-space: nowrap; scrollbar-width: none;
 }
-.exchange-bar::-webkit-scrollbar { display: none; }
-
 .ex-icon {
-    padding: 8px 16px;
-    border-radius: 20px;
-    background: #1e293b;
-    border: 1px solid var(--border);
-    color: #94a3b8;
-    font-size: 0.8rem;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 5px;
+    padding: 8px 16px; border-radius: 20px; background: #1e293b; 
+    border: 1px solid var(--border); color: #94a3b8; font-size: 0.8rem; cursor: pointer;
 }
-.ex-icon.active {
-    background: #1e293b;
-    border-color: var(--accent);
-    color: var(--accent);
-    font-weight: bold;
-}
-
-/* [중요 4] 메인 영역 (스크롤 가능, 하단 여백) */
-main {
-    flex: 1;
-    padding: 15px;
-    /* 하단 메뉴바(70px) 가림 방지 */
-    padding-bottom: 90px; 
-    overflow-y: auto;
-}
-
-/* 코인 리스트 그리드 */
-.grid-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.coin-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 15px;
-    cursor: pointer;
-}
-
-/* 페이지 번호 */
-.pagination {
-    display: flex; justify-content: center; gap: 5px;
-    margin-top: 20px;
-}
-.page-btn {
-    width: 30px; height: 30px;
-    background: #1e293b; border: 1px solid var(--border);
-    color: #94a3b8; border-radius: 4px;
-    cursor: pointer;
-}
-.page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* 하단 메뉴바 고정 */
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    background-color: #0f172a;
-    border-top: 1px solid var(--border);
-    z-index: 10000;
-    display: flex; justify-content: space-around; align-items: center;
-}
-.nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; font-size: 0.7rem; text-decoration: none; }
-.nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
-.nav-item.active { color: var(--accent); }
+.ex-icon.active { background: #1e293b; border: 1px solid var(--accent); color: var(--accent); font-weight:bold; }
