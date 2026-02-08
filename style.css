@@ -1,61 +1,63 @@
 /* style.css */
-:root {
-    --bg: #020617;
-    --card: #1e293b;
-    --accent: #0ea5e9;
-    --border: #334155;
+
+/* 메인 영역: 차트 위 공백 제거 & 내부 요소 밀착 */
+main {
+    flex: 1;
+    overflow-y: auto !important;
+    padding: 0 10px 90px 10px; /* 상단 0, 하단 90(메뉴바 공간) */
+    display: flex;
+    flex-direction: column;
+    gap: 0px !important; /* 요소 사이 틈 없음 */
 }
 
-/* 전체 초기화 및 스크롤 방지 */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: #fff; }
-
-.wrapper { display: flex; flex-direction: column; height: 100vh; position: relative; }
-
-/* [수정] 뒤로가기 버튼: 차트 숫자를 가리지 않도록 위치 고정 */
-.back-btn {
-    position: absolute;
-    top: 18px; /* 헤더 높이 중앙쯤 배치 */
-    left: 15px;
-    z-index: 5000;
-    color: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+/* 차트: 높이 260px 고정 */
+.chart-box {
+    width: 100%;
+    height: 260px;
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 5px !important; /* 터미널과 5px 간격 */
+    flex-shrink: 0;
 }
 
-header { height: 65px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-
-/* [수정] 메인 영역: 차트 위 공백을 완전히 제거하기 위해 padding-top: 0 */
-main { 
-    flex: 1; overflow-y: auto !important; 
-    padding: 0 12px 100px 12px; 
-    display: flex; flex-direction: column; 
-    gap: 0px !important; /* 요소 간 자동 간격 제거 */
+/* 자동매매 터미널: 높이 최소화 */
+.ai-terminal {
+    background: #000;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 8px; /* 패딩 줄임 */
+    margin-bottom: 0px !important;
+    flex-shrink: 0;
 }
 
-/* 차트 박스: 상단 선을 없애 헤더와 밀착 */
-.chart-box { 
-    width: 100%; height: 260px; 
-    border: 1px solid var(--border); border-top: none; 
-    margin-bottom: 10px !important; flex-shrink: 0; 
+/* 로그 창 높이 줄임 (70px) */
+.log-screen {
+    height: 70px; 
+    overflow-y: auto;
+    color: var(--up);
+    font-size: 0.75rem;
+    margin-bottom: 5px;
 }
 
-/* AI 터미널 압축 */
-.ai-terminal { 
-    background: #000; border: 2px solid var(--accent); border-radius: 12px; 
-    padding: 10px; flex-shrink: 0; margin-bottom: 0px !important;
-}
-.log-screen { height: 80px; overflow-y: auto; color: #10b981; font-size: 0.75rem; margin-bottom: 10px; }
-
-/* 버튼 스타일: 사진처럼 꽉 차게 */
-.ai-btn { 
-    width: 100%; height: 45px; border: none; border-radius: 8px; 
-    font-weight: 800; display: flex; align-items: center; justify-content: center; 
+/* 리스트 제목: 터미널 바로 밑에 붙음 */
+.history-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin: 8px 0 4px 5px !important;
 }
 
-/* 제목 중복 방지 및 밀착 */
-.history-title { 
-    font-size: 0.95rem; font-weight: 800; color: var(--accent); 
-    margin: 15px 0 8px 5px !important; 
+/* 히스토리 리스트: 남은 공간 꽉 채우기 */
+.history-card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 2px;
+    height: 180px; /* 높이 고정 (화면 밖으로 안 밀리게) */
+    overflow-y: auto; /* 내부 스크롤 */
+    flex-shrink: 0;
 }
+
+/* 테이블 행 간격 초압축 */
+table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+th, td { padding: 4px 2px !important; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
