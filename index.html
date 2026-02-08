@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI QUANT</title>
     <link rel="stylesheet" href="https://minetia.github.io/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -17,27 +18,13 @@
         <div class="ex-icon active" onclick="selectExchange('UPBIT', this)">
             <i class="fas fa-arrow-trend-up"></i> UPBIT
         </div>
-        <div class="ex-icon" onclick="selectExchange('BITHUMB', this)">
-            <i class="fas fa-coins"></i> BITHUMB
-        </div>
-        <div class="ex-icon" onclick="selectExchange('COINONE', this)">
-            <i class="fas fa-wallet"></i> COINONE
-        </div>
-        
-        <div style="width:1px; background:#334155; margin:0 5px;"></div>
-
         <div class="ex-icon" onclick="selectExchange('BINANCE', this)">
             <i class="fas fa-globe"></i> BINANCE
         </div>
-        <div class="ex-icon" onclick="selectExchange('COINBASE', this)">
-            <i class="fas fa-building-columns"></i> COINBASE
-        </div>
-        <div class="ex-icon" onclick="selectExchange('BYBIT', this)">
-            <i class="fas fa-bolt"></i> BYBIT
-        </div>
-        <div class="ex-icon" onclick="selectExchange('OKX', this)">
-            <i class="fas fa-o"></i> OKX
-        </div>
+        <div class="ex-icon" onclick="alert('준비중')"><i class="fas fa-coins"></i> BITHUMB</div>
+        <div class="ex-icon" onclick="alert('준비중')"><i class="fas fa-wallet"></i> COINONE</div>
+        <div class="ex-icon" onclick="alert('준비중')"><i class="fas fa-bolt"></i> BYBIT</div>
+        <div class="ex-icon" onclick="alert('준비중')"><i class="fas fa-o"></i> OKX</div>
     </div>
 
     <main>
@@ -57,17 +44,12 @@
                 { id: 'nav-placeholder', file: 'nav.html' }
             ]);
         }
-        // 기본값: 업비트 실행
-        fetchCoinData('UPBIT');
+        fetchCoinData('UPBIT'); // 시작하면 업비트 로드
     };
 
-    // 아이콘 클릭 처리
     function selectExchange(ex, btn) {
-        // 모든 아이콘 비활성화
         document.querySelectorAll('.ex-icon').forEach(b => b.classList.remove('active'));
-        // 클릭한 아이콘 활성화
         btn.classList.add('active');
-        // 데이터 로드
         fetchCoinData(ex);
     }
 </script>
