@@ -3,112 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Quant Master</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://minetia.github.io/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <style>
-        :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; --up: #10b981; --down: #ef4444; }
-        html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: sans-serif; }
-        .wrapper { display: grid; grid-template-rows: 65px 1fr 75px; height: 100vh; }
-        header, #nav-placeholder { background: #0f172a; border-bottom: 1px solid var(--border); z-index: 1000; }
-        main { overflow-y: auto !important; padding: 12px; display: flex; flex-direction: column; gap: 15px; }
-
-        /* 시드머니 대시보드 */
-        .dashboard { background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 20px; padding: 20px; border: 1px solid var(--border); }
-        .total-val { font-size: 2rem; font-weight: 800; margin: 5px 0; }
-        .profit-label { display: inline-block; padding: 4px 10px; border-radius: 50px; font-size: 0.85rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--up); }
-        .win-box { display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; font-size: 0.8rem; }
-        
-        .tab-menu { display: grid; grid-template-columns: 1fr 1fr; background: #000; border-radius: 12px; padding: 4px; border: 1px solid var(--border); }
-        .tab-btn { border: none; background: none; color: #94a3b8; padding: 10px; font-weight: 800; cursor: pointer; }
-        .tab-btn.active { background: var(--accent); color: #000; border-radius: 8px; }
-
-        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .coin-item { background: var(--card); border-radius: 15px; padding: 15px; border: 1px solid var(--border); cursor: pointer; }
-        .up { color: var(--up); } .down { color: var(--down); }
-    </style>
+    <script src="https://minetia.github.io/script.js"></script>
 </head>
 <body>
 <div class="wrapper">
     <header id="header-placeholder"></header>
     <main>
-        <div class="dashboard">
-            <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;">TOTAL ESTIMATED ASSETS</div>
-            <div class="total-val" id="totalAsset">12,450,000</div>
-            <div class="profit-label" id="pnlInfo">+2,450,000 (+24.5%)</div>
-            <div class="win-box">
-                <div>원금: <b>10,000,000</b></div>
-                <div>실시간 승률: <b style="color:var(--accent);">85.4%</b></div>
-            </div>
-        </div>
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="setMarket('krw', this)">국내 시장</button>
-            <button class="tab-btn" onclick="setMarket('global', this)">해외 시장</button>
+            <button class="tab-btn active" onclick="setMarketType('krw', this)">국내 시장</button>
+            <button class="tab-btn" onclick="setMarketType('global', this)">국외 시장</button>
         </div>
-        <div id="ex-placeholder"></div>
         <div id="coinList" class="grid-container"></div>
     </main>
-    <div id="nav-placeholder"></div>
+    <footer id="nav-placeholder"></footer>
 </div>
 <script>
-    let marketType = 'krw'; let selectedEx = 'UPBIT';
-    const BASE_URL = "https://minetia.github.io/";
-
-    async function init() {
-        const [h, n, e] = await Promise.all([
-            fetch(BASE_URL+'header.html').then(r=>r.text()),
-            fetch(BASE_URL+'nav.html').then(r=>r.text()),
-            fetch(BASE_URL+'exchanges.html').then(r=>r.text())
+    window.onload = async () => {
+        await includeResources([
+            { id: 'header-placeholder', file: 'header.html' },
+            { id: 'nav-placeholder', file: 'nav.html' }
         ]);
-        document.getElementById('header-placeholder').innerHTML = h;
-        document.getElementById('nav-placeholder').innerHTML = n;
-        document.getElementById('ex-placeholder').innerHTML = e;
-
-        const scripts = new DOMParser().parseFromString(e, 'text/html').querySelectorAll('script');
-        scripts.forEach(s => { const ns = document.createElement('script'); ns.text = s.text; document.head.appendChild(ns).parentNode.removeChild(ns); });
-
-        setTimeout(() => { if(window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx); fetchData(); }, 200);
+        fetchCoinData('krw');
+    };
+    function setMarketType(type, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        fetchCoinData(type);
     }
-
-    window.selectEx = function(ex) { selectedEx = ex; fetchData(); };
-    function setMarket(type, btn) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        marketType = type; selectedEx = (type === 'krw') ? 'UPBIT' : 'BINANCE';
-        if(window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx); fetchData();
-    }
-
-    async function fetchData() {
-        const list = document.getElementById('coinList');
-        try {
-            let res;
-            if (marketType === 'krw') {
-                const mRes = await axios.get('https://api.upbit.com/v1/market/all');
-                const krw = mRes.data.filter(m => m.market.startsWith("KRW-")).slice(0, 40);
-                res = await axios.get(`https://api.upbit.com/v1/ticker?markets=${krw.map(m => m.market).join(',')}`);
-                list.innerHTML = res.data.map(t => createItem(t.market.split('-')[1], t.trade_price.toLocaleString() + " 원", (t.signed_change_rate * 100).toFixed(2))).join('');
-            } else {
-                res = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
-                const usdt = res.data.filter(t => t.symbol.endsWith("USDT")).slice(0, 40);
-                list.innerHTML = usdt.map(t => createItem(t.symbol.replace("USDT", ""), "$ " + parseFloat(t.lastPrice).toLocaleString(), parseFloat(t.priceChangePercent).toFixed(2))).join('');
-            }
-        } catch (e) { list.innerHTML = "연결 중..."; }
-    }
-
-    function createItem(sym, price, change) {
-        return `<div class="coin-item" onclick="goTrade('${sym}')">
-            <div style="font-size:0.75rem; color:#94a3b8;">${sym}</div>
-            <div style="font-size:1rem; font-weight:800;">${price}</div>
-            <div class="${change>=0?'up':'down'}" style="font-size:0.75rem;">${change>=0?'+':''}${change}%</div>
-        </div>`;
-    }
-
-    function goTrade(sym) {
-        let pair = (marketType === 'krw') ? "KRW" : "USDT";
-        let symbol = `${selectedEx}:${sym}${pair}`;
-        location.href = `${BASE_URL}coin/modal.html?symbol=${symbol}&coin=${sym}&ex=${selectedEx}&mode=auto`;
-    }
-
-    window.onload = init; setInterval(fetchData, 5000);
 </script>
 </body>
 </html>
