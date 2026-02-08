@@ -4,83 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI QUANT</title>
-
-    <link rel="stylesheet" href="https://minetia.github.io/style.css">
     
+    <link rel="stylesheet" href="https://minetia.github.io/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <script src="https://minetia.github.io/script.js"></script>
 </head>
 <body>
 
 <div class="wrapper">
-    <header id="header-placeholder" style="height:60px; border-bottom:1px solid #334155; display:flex; align-items:center; padding-left:15px; color:#fff;">
-        <i class="fas fa-robot"></i> &nbsp; AI QUANT...
-    </header>
+    <header id="header-placeholder"></header>
 
     <main>
-        <div class="tab-menu" id="main-tab-menu" style="margin-top:10px;">
-            <button class="tab-btn active" onclick="loadList('ex_kr.html', this)">국내 5대 거래소</button>
-            <button class="tab-btn" onclick="loadList('ex_global.html', this)">해외 10대 거래소</button>
+        <div class="tab-menu" style="margin-top:10px; margin-bottom:10px;">
+            <button class="tab-btn active" onclick="setMarket('UPBIT', this)">국내 시장 (UPBIT)</button>
+            <button class="tab-btn" onclick="setMarket('BINANCE', this)">해외 시장 (BINANCE)</button>
         </div>
 
-        <div id="list-placeholder" class="grid-container">
+        <div id="coinList" class="grid-container">
             <div style="grid-column: span 2; text-align: center; padding: 50px; color: #64748b;">
-                <i class="fas fa-spinner fa-spin"></i> 목록 불러오는 중...
+                <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>시세 데이터를 불러오는 중...
             </div>
         </div>
     </main>
 
-    <footer id="nav-placeholder" style="height:70px; background:#0f172a; border-top:1px solid #334155; position:fixed; bottom:0; width:100%;"></footer>
+    <footer id="nav-placeholder"></footer>
 </div>
 
 <script>
-    // 페이지가 열리자마자 실행
     window.onload = async () => {
-        
-        // 1. 헤더(header.html)와 하단메뉴(nav.html)를 강제로 업어오기
-        // script.js에 있는 includeResources 함수 사용
+        // 1. 헤더/푸터 불러오기
         if(typeof includeResources === 'function') {
             await includeResources([
                 { id: 'header-placeholder', file: 'header.html' },
                 { id: 'nav-placeholder', file: 'nav.html' }
             ]);
-        } else {
-            console.error("script.js가 로드되지 않았습니다.");
         }
 
-        // 2. 초기 화면: 국내 5대 거래소 목록(ex_kr.html) 보여주기
-        loadList('ex_kr.html');
+        // 2. 시작하자마자 '국내 시장(업비트)' 데이터 바로 로드
+        setMarket('UPBIT');
     };
 
-    // 파일 불러오는 함수 (탭 클릭 시 작동)
-    async function loadList(filename, btn) {
-        // 탭 버튼 색상 변경
+    // 탭 클릭 기능
+    function setMarket(type, btn) {
+        // 버튼 스타일 변경
         if(btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
-
-        const container = document.getElementById('list-placeholder');
-        const tabMenu = document.getElementById('main-tab-menu');
-
-        // 탭 메뉴가 숨겨져 있다면 다시 보이게 처리 (상세보기에서 돌아올 때)
-        if(tabMenu) tabMenu.style.display = 'flex';
-
-        try {
-            // 파일 내용을 가져와서 끼워넣기
-            const response = await fetch(`https://minetia.github.io/${filename}`);
-            if (!response.ok) throw new Error('파일 없음');
-            
-            const html = await response.text();
-            container.innerHTML = html;
-            
-        } catch (e) {
-            container.innerHTML = `<div style="color:red; text-align:center; padding:30px;">
-                ${filename} 파일을 찾을 수 없습니다.<br>
-                깃허브에 파일이 올라갔는지 확인해주세요.
-            </div>`;
+        
+        // 데이터 불러오기 함수 호출 (script.js에 있음)
+        if(typeof fetchCoinData === 'function') {
+            fetchCoinData(type);
         }
     }
 </script>
