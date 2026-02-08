@@ -3,46 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Quant Master - Total Fix</title>
+    <title>AI Quant Master - 2026 Core</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; --up: #10b981; --down: #ef4444; }
-        
-        /* 전체 레이아웃 고정 */
         html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; }
-        .wrapper { display: grid; grid-template-rows: 65px 1fr 75px; height: 100vh; width: 100vw; }
-
-        /* 1. 상단 헤더: AI 검색엔진 */
-        header { background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; z-index: 100; }
-        .search-area { flex: 1; display: flex; justify-content: center; }
-        .search-box { position: relative; width: 100%; max-width: 400px; }
-        .search-box input { width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: #000; color: #fff; padding: 0 40px 0 15px; outline: none; }
-        .search-box i { position: absolute; right: 12px; top: 11px; color: var(--accent); cursor: pointer; }
-
-        /* 2. 중앙 본문: 스크롤 뻥 뚫림 */
-        main { 
-            overflow-y: auto !important; 
-            -webkit-overflow-scrolling: touch; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            background: var(--bg);
-        }
-
-        /* 자산 카드 */
-        .total-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 20px; padding: 25px; border: 1px solid var(--border); text-align: center; flex-shrink: 0; }
         
-        /* 국내 코인 리스트 */
-        .list-container { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 15px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .coin-name { font-weight: 700; font-size: 0.95rem; }
+        /* 3단 레이아웃 고정 */
+        .wrapper { display: grid; grid-template-rows: 65px 1fr 75px; height: 100vh; width: 100vw; }
+        header { background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; z-index: 1000; }
+        #nav-placeholder { background: #0f172a; border-top: 1px solid var(--border); z-index: 1000; }
 
-        /* 3. 하단 메뉴 인클루드 지점 */
-        #nav-placeholder { background: #0f172a; border-top: 1px solid var(--border); z-index: 100; }
+        /* 본문 스크롤 영역 */
+        main { overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* 탭 및 타이틀 */
+        .tab-menu { display: grid; grid-template-columns: 1fr 1fr; background: #000; border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+        .tab-btn { border: none; background: none; color: #94a3b8; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .tab-btn.active { background: var(--accent); color: #000; }
+
+        .market-header { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 0 5px; }
+        .market-title { font-size: 1rem; font-weight: 800; }
+        .selected-ex-name { font-size: 0.75rem; color: var(--accent); font-weight: 600; background: rgba(14, 165, 233, 0.15); padding: 2px 8px; border-radius: 4px; }
+
+        /* 코인 그리드 리스트 */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 5px; }
+        .coin-item { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .coin-item:active { transform: scale(0.96); }
+        .coin-sym { font-weight: 800; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+        .coin-price { font-size: 1.1rem; font-weight: 800; font-family: 'Roboto Mono', monospace; }
         
         .up { color: var(--up); } .down { color: var(--down); }
     </style>
@@ -50,82 +41,135 @@
 <body>
 
 <div class="wrapper">
-    <header>
-        <div class="search-area">
-            <div class="search-box">
-                <input type="text" id="coinIn" placeholder="AI 종목 분석 및 검색..." onkeypress="if(event.key==='Enter') search()">
-                <i class="fas fa-search" onclick="search()"></i>
-            </div>
-        </div>
-    </header>
+    <header id="header-placeholder"></header>
 
     <main>
-        <div class="total-card">
-            <div style="color: #94a3b8; font-size: 0.8rem;">ESTIMATED ASSETS</div>
-            <div id="mainBalance" style="font-size: 2.2rem; font-weight: 800; margin: 10px 0;">100,000,000</div>
-            <div class="up" style="font-weight: 700;"><i class="fas fa-robot"></i> AI 최적화 운용 중</div>
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="setMarket('krw', this)">국내 시장</button>
+            <button class="tab-btn" onclick="setMarket('global', this)">해외 시장</button>
         </div>
 
-        <div style="font-weight: 800; font-size: 1.1rem; color: var(--accent);">KRW MARKET LIST</div>
-
-        <div class="list-container">
-            <table>
-                <tbody id="coinListBody">
-                    <tr><td style="text-align:center; padding:40px; color:#94a3b8;">업비트 시세 동기화 중...</td></tr>
-                </tbody>
-            </table>
+        <div class="market-header">
+            <div class="market-title" id="marketLabel">국내 실시간 시세</div>
+            <div id="exNameDisplay" class="selected-ex-name">UPBIT</div>
         </div>
 
-        <div style="height: 30px;"></div> </main>
+        <div id="ex-placeholder"></div>
+
+        <div id="coinList" class="grid-container">
+            <div style="grid-column: span 2; text-align:center; padding:50px; color:#94a3b8;">데이터 동기화 중...</div>
+        </div>
+        <div style="height:20px;"></div>
+    </main>
 
     <div id="nav-placeholder"></div>
 </div>
 
 <script>
-    // [인클루드] 하단 메뉴 nav.html 불러오기
-    fetch('https://minetia.github.io/nav.html')
-        .then(res => res.text())
-        .then(data => { document.getElementById('nav-placeholder').innerHTML = data; })
-        .catch(() => { 
-            // 절대경로 실패 시 로컬에서 재시도
-            fetch('nav.html').then(r => r.text()).then(d => document.getElementById('nav-placeholder').innerHTML = d);
-        });
+    let marketType = 'krw';
+    let selectedEx = 'UPBIT';
+    const MODAL_URL = "https://minetia.github.io/coin/modal.html";
 
-    function search() {
-        const val = document.getElementById('coinIn').value.toUpperCase().trim();
-        if(val) location.href = `modal.html?coin=${val}`;
-    }
+    // [전역 함수] 인클루드 파일에서 호출할 수 있도록 window에 등록
+    window.selectEx = function(ex) {
+        selectedEx = ex;
+        document.getElementById('exNameDisplay').innerText = selectedEx;
+        if (window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx);
+        fetchCoinData();
+    };
 
-    // [해결] 국내 코인 리스트 API 로직
-    async function getCoinList() {
+    // 1. 모든 컴포넌트 업어오기 (로딩 보장 로직)
+    async function loadAllComponents() {
+        const baseUrl = 'https://minetia.github.io/';
+        
         try {
-            const res = await axios.get('https://api.upbit.com/v1/market/all');
-            const krwCoins = res.data.filter(c => c.market.startsWith('KRW-')).slice(0, 20); 
-            const markets = krwCoins.map(c => c.market).join(',');
-            const tickerRes = await axios.get(`https://api.upbit.com/v1/ticker?markets=${markets}`);
+            // 헤더, 내비 로드
+            const h = await fetch(baseUrl + 'header.html').then(r => r.text());
+            document.getElementById('header-placeholder').innerHTML = h;
             
-            const listBody = document.getElementById('coinListBody');
-            listBody.innerHTML = krwCoins.map(coin => {
-                const ticker = tickerRes.data.find(t => t.market === coin.market);
-                const price = ticker ? ticker.trade_price.toLocaleString() : "---";
-                const change = ticker ? (ticker.signed_change_rate * 100).toFixed(2) : "0";
-                return `
-                    <tr onclick="location.href='modal.html?coin=${coin.market.split('-')[1]}'" style="cursor:pointer;">
-                        <td>
-                            <div class="coin-name">${coin.korean_name}</div>
-                            <div style="font-size:0.7rem; color:#94a3b8;">${coin.market}</div>
-                        </td>
-                        <td style="text-align:right; font-weight:700;">
-                            <div>${price} 원</div>
-                            <span style="font-size:0.75rem;" class="${change > 0 ? 'up' : 'down'}">${change > 0 ? '+' : ''}${change}%</span>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        } catch (e) { console.log("API 호출 지연..."); }
+            const n = await fetch(baseUrl + 'nav.html').then(r => r.text());
+            document.getElementById('nav-placeholder').innerHTML = n;
+
+            // 거래소 인클루드 로드 및 스크롤 짤림 방지 스크립트 강제 실행
+            const eHtml = await fetch(baseUrl + 'exchanges.html').then(r => r.text());
+            document.getElementById('ex-placeholder').innerHTML = eHtml;
+
+            // 인클루드된 HTML 내부의 스크립트를 추출하여 수동 실행 (이게 핵심!)
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(eHtml, 'text/html');
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(s => {
+                const newScript = document.createElement('script');
+                newScript.text = s.text;
+                document.head.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+
+            // 초기 UI 렌더링
+            setTimeout(() => {
+                if (window.renderExchangeChips) {
+                    window.renderExchangeChips(marketType, selectedEx);
+                }
+                fetchCoinData();
+            }, 100);
+
+        } catch (e) { console.error("Component load error:", e); }
     }
 
-    window.onload = () => { getCoinList(); setInterval(getCoinList, 5000); };
+    // 2. 시장 전환 (국내/해외)
+    function setMarket(type, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        marketType = type;
+        selectedEx = (type === 'krw') ? 'UPBIT' : 'BINANCE';
+        
+        document.getElementById('marketLabel').innerText = type === 'krw' ? '국내 실시간 시세' : '해외 실시간 시세';
+        document.getElementById('exNameDisplay').innerText = selectedEx;
+
+        if (window.renderExchangeChips) window.renderExchangeChips(marketType, selectedEx);
+        fetchCoinData();
+    }
+
+    // 3. 실시간 코인 데이터 패칭 (2026.02 기준)
+    async function fetchCoinData() {
+        const list = document.getElementById('coinList');
+        try {
+            let res;
+            if (marketType === 'krw') {
+                const mRes = await axios.get('https://api.upbit.com/v1/market/all');
+                const krwMarkets = mRes.data.filter(m => m.market.startsWith("KRW-")).slice(0, 40);
+                res = await axios.get(`https://api.upbit.com/v1/ticker?markets=${krwMarkets.map(m => m.market).join(',')}`);
+                
+                list.innerHTML = res.data.map(t => {
+                    const sym = t.market.split('-')[1];
+                    const change = (t.signed_change_rate * 100).toFixed(2);
+                    return createCoinItem(sym, t.trade_price.toLocaleString() + " 원", change);
+                }).join('');
+            } else {
+                res = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
+                const usdtTickers = res.data.filter(t => t.symbol.endsWith("USDT")).slice(0, 40);
+                
+                list.innerHTML = usdtTickers.map(t => {
+                    const sym = t.symbol.replace("USDT", "");
+                    const change = parseFloat(t.priceChangePercent).toFixed(2);
+                    return createCoinItem(sym, "$ " + parseFloat(t.lastPrice).toLocaleString(), change);
+                }).join('');
+            }
+        } catch (e) { console.warn("API 딜레이 발생"); }
+    }
+
+    function createCoinItem(sym, price, change) {
+        return `
+            <div class="coin-item" onclick="location.href='${MODAL_URL}?coin=${sym}&ex=${selectedEx}&mode=auto'">
+                <div class="coin-sym">${sym} / ${selectedEx}</div>
+                <div class="coin-price">${price}</div>
+                <div class="coin-change ${change >= 0 ? 'up' : 'down'}">${change >= 0 ? '+' : ''}${change}%</div>
+            </div>
+        `;
+    }
+
+    window.onload = loadAllComponents;
+    setInterval(fetchCoinData, 5000); // 5초마다 실시간 갱신
+    localStorage.setItem("ai_engine_active", "true"); // 영구 가동 상태 유지
 </script>
 </body>
 </html>
