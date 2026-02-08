@@ -1,0 +1,58 @@
+<nav class="bottom-nav">
+    <a href="https://minetia.github.io/Home/" class="nav-item">
+        <i class="fas fa-home"></i><span>Home</span>
+    </a>
+    
+    <a href="https://minetia.github.io/business/" class="nav-item">
+        <i class="fas fa-briefcase"></i><span>Biz</span>
+    </a>
+    
+    <a href="https://minetia.github.io/mov.html" class="nav-item active">
+        <i class="fas fa-chart-line"></i><span>Trade</span>
+    </a>
+    
+    <a href="https://minetia.github.io/news/" class="nav-item">
+        <i class="fas fa-newspaper"></i><span>News</span>
+    </a>
+    
+    <a href="https://minetia.github.io/tech/" class="nav-item">
+        <i class="fas fa-microchip"></i><span>Tech</span>
+    </a>
+</nav>
+
+<style>
+    /* 하단 바 전체 스타일 */
+    .bottom-nav { 
+        display: flex; 
+        justify-content: space-around; 
+        align-items: center; 
+        height: 75px; 
+        width: 100%; 
+        background: #0f172a; 
+        border-top: 1px solid #334155;
+        padding-bottom: env(safe-area-inset-bottom); /* 아이폰 하단 바 대응 */
+    }
+
+    /* 각 메뉴 아이템 스타일 */
+    .nav-item { 
+        color: #94a3b8; 
+        text-decoration: none; 
+        text-align: center; 
+        font-size: 0.75rem; 
+        flex: 1; 
+        transition: color 0.3s ease;
+    }
+
+    /* 아이콘 크기 조절 */
+    .nav-item i { 
+        display: block; 
+        font-size: 1.4rem; 
+        margin-bottom: 4px; 
+    }
+
+    /* 현재 활성화된 페이지 (Trade) 하이라이트 */
+    .nav-item.active { 
+        color: #0ea5e9; 
+        font-weight: 800;
+    }
+</style>

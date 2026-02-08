@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Quant Master - Final Fix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; --up: #10b981; --down: #ef4444; }
+        
+        /* 1. 레이아웃 고정 및 스크롤 활성화 */
+        html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; }
+        .wrapper { display: grid; grid-template-rows: 65px 1fr 75px; height: 100vh; width: 100vw; }
+
+        /* 2. 상단 헤더: 검색엔진 부활 */
+        header { background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; z-index: 1000; gap: 15px; }
+        .search-box { flex: 1; position: relative; }
+        .search-box input { width: 100%; height: 40px; border-radius: 12px; border: 1px solid var(--border); background: #000; color: #fff; padding: 0 40px 0 15px; outline: none; }
+        .search-box i { position: absolute; right: 12px; top: 12px; color: var(--accent); }
+
+        /* 3. 본문 영역: 스크롤 완벽 해결 */
+        main { 
+            overflow-y: auto !important; 
+            -webkit-overflow-scrolling: touch; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            background: var(--bg);
+        }
+
+        /* 차트 박스 */
+        .chart-container { height: 350px; min-height: 350px; border-radius: 15px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
+
+        /* AI 터미널 (10줄) */
+        .ai-terminal { background: #000; border-radius: 15px; border: 2px solid var(--accent); padding: 15px; flex-shrink: 0; }
+        .log-box { height: 210px; overflow-y: auto; color: #10b981; font-family: monospace; font-size: 0.85rem; line-height: 1.6; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+
+        /* 지갑 리스트 */
+        .history-card { background: var(--card); border-radius: 15px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; margin-bottom: 20px; }
+        .history-card h3 { padding: 15px; margin: 0; font-size: 1rem; color: var(--accent); border-bottom: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 450px; }
+        th { background: rgba(0,0,0,0.2); padding: 12px; color: #94a3b8; }
+        td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+
+        .ai-btn { width: 100%; height: 55px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        .btn-start { background: var(--accent); color: #000; }
+        .btn-stop { background: var(--down); color: #fff; }
+        #nav-placeholder { background: #0f172a; border-top: 1px solid var(--border); z-index: 1000; }
+        .up { color: var(--up); } .down { color: var(--down); }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <header>
+        <i class="fas fa-arrow-left" onclick="history.back()" style="cursor:pointer;"></i>
+        <div class="search-box">
+            <input type="text" id="coinSearch" placeholder="코인명/심볼 검색..." onkeypress="if(event.key==='Enter') search()">
+            <i class="fas fa-search" onclick="search()"></i>
+        </div>
+    </header>
+
+    <main>
+        <div class="chart-container">
+            <div id="tradingview_chart" style="height: 100%;"></div>
+        </div>
+
+        <div style="background:var(--card); padding:20px; border-radius:15px; border:1px solid var(--border);">
+            <div style="color:#94a3b8; font-size:0.8rem;">TOTAL ASSETS</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                <span style="font-size:1.8rem; font-weight:800;" id="totalBalance">100,000,000</span>
+                <span class="up" style="font-weight:700;">+84.2% 승률</span>
+            </div>
+        </div>
+
+        <div class="ai-terminal">
+            <div class="log-box" id="aiLogBox">
+                <div>[SYSTEM] 엔진 준비 완료. 검색 또는 시작을 눌러주세요.</div>
+            </div>
+            <button id="aiBtn" class="ai-btn btn-start" onclick="toggleAI()">AI 자동매매 엔진 시작</button>
+        </div>
+
+        <div class="history-card">
+            <h3><i class="fas fa-wallet"></i> 지갑 상세 거래 내역</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>날짜</th><th>코인이름</th><th>매수금액</th><th>매도금액</th><th>남은수량</th></tr>
+                    </thead>
+                    <tbody id="walletList">
+                        <tr><td>02/08</td><td style="font-weight:700;">BTC</td><td class="up">98,120K</td><td class="down">-</td><td>0.12 BTC</td></tr>
+                        <tr><td>02/07</td><td style="font-weight:700;">ETH</td><td class="up">3,250K</td><td class="down">3,450K</td><td>0.00 ETH</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div style="height:30px;"></div>
+    </main>
+
+    <div id="nav-placeholder"></div>
+</div>
+
+<script>
+    // 하단 메뉴 인클루드
+    fetch('https://minetia.github.io/nav.html')
+        .then(res => res.text())
+        .then(data => { document.getElementById('nav-placeholder').innerHTML = data; });
+
+    let isRunning = false;
+    const STATE_KEY = "ai_running_state";
+
+    window.onload = function() {
+        if(localStorage.getItem(STATE_KEY) === "true") startAI();
+        initChart();
+    };
+
+    function search() {
+        const val = document.getElementById('coinSearch').value.toUpperCase().trim();
+        if(val) location.href = `modal.html?coin=${val}`;
+    }
+
+    function toggleAI() {
+        if(!isRunning) { startAI(); localStorage.setItem(STATE_KEY, "true"); }
+        else { stopAI(); localStorage.setItem(STATE_KEY, "false"); }
+    }
+
+    function startAI() {
+        isRunning = true;
+        const btn = document.getElementById('aiBtn');
+        btn.innerText = "AI 엔진 중지 (데이터 수집 중)";
+        btn.className = "ai-btn btn-stop";
+        addLog("AI 가동: 실시간 데이터를 수집하여 지갑을 관리합니다.");
+    }
+
+    function stopAI() {
+        isRunning = false;
+        const btn = document.getElementById('aiBtn');
+        btn.innerText = "AI 자동매매 엔진 시작";
+        btn.className = "ai-btn btn-start";
+        addLog("AI 엔진 중지됨.");
+    }
+
+    function addLog(msg) {
+        const box = document.getElementById('aiLogBox');
+        const now = new Date().toLocaleTimeString();
+        box.innerHTML = `<div><span style="color:var(--accent)">[${now}]</span> ${msg}</div>` + box.innerHTML;
+    }
+
+    function initChart() {
+        let coin = new URLSearchParams(window.location.search).get('coin') || 'BTC';
+        new TradingView.widget({
+            "container_id": "tradingview_chart",
+            "symbol": "UPBIT:"+coin+"KRW",
+            "interval": "1",
+            "theme": "dark",
+            "locale": "ko",
+            "autosize": true
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<div class="header-content">
+    <i class="fas fa-robot" style="color:var(--accent); font-size:1.5rem;"></i>
+    <div class="search-box">
+        <input type="text" id="globalSearch" placeholder="코인 분석 검색 (BTC, ETH...)" onkeypress="if(event.key==='Enter') globalSearch()">
+        <i class="fas fa-search" onclick="globalSearch()"></i>
+    </div>
+    <div id="status-light" class="online-dot"></div>
+</div>
+
+<style>
+    .header-content { display: flex; align-items: center; width: 100%; gap: 15px; }
+    .search-box { flex: 1; position: relative; }
+    .search-box input { 
+        width: 100%; height: 38px; border-radius: 10px; border: 1px solid var(--border); 
+        background: #000; color: #fff; padding: 0 40px 0 12px; outline: none; font-size: 0.9rem;
+    }
+    .search-box i { position: absolute; right: 12px; top: 10px; color: var(--accent); cursor: pointer; }
+    .online-dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+</style>
+
+<script>
+    function globalSearch() {
+        const val = document.getElementById('globalSearch').value.toUpperCase().trim();
+        if(val) location.href = `https://minetia.github.io/modal.html?coin=${val}`;
+    }
+</script>

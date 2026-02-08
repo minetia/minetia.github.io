@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trading Center - mov</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg: #020617; --card: #1e293b; --accent: #0ea5e9; --border: #334155; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; }
+        
+        /* 3단 그리드: 헤더 / 본문 / 하단메뉴 */
+        .wrapper { display: grid; grid-template-rows: 60px 1fr 75px; height: 100vh; width: 100vw; }
+
+        header { background: #0f172a; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; font-weight: 800; font-size: 1.2rem; }
+        
+        main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; }
+        
+        .trade-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 20px; }
+        .token-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        /* 거래 버튼 스타일 */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { height: 50px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; }
+        .buy { background: #10b981; color: #000; }
+        .sell { background: #ef4444; color: #fff; }
+
+        /* nav.html이 들어올 자리 */
+        #nav-placeholder { background: #0f172a; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <header>
+        <i class="fas fa-chart-pie" style="color:var(--accent); margin-right:10px;"></i> Trading Center
+    </header>
+
+    <main>
+        <div class="trade-card">
+            <div class="token-info">
+                <span style="font-size: 1.2rem; font-weight: 700;">BTC / KRW</span>
+                <span style="color:#10b981; font-weight: 800;">실시간 연동 중</span>
+            </div>
+            <div style="font-size: 0.8rem; color:#94a3b8; margin-bottom:5px;">주문 가능 금액</div>
+            <div style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;">100,000,000 KRW</div>
+            
+            <div class="btn-group">
+                <button class="btn buy" onclick="location.href='modal.html?coin=BTC'">매수하러 가기</button>
+                <button class="btn sell">매도 (준비중)</button>
+            </div>
+        </div>
+
+        <div class="trade-card" style="border-style: dashed; opacity: 0.6;">
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                <i class="fas fa-plus-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <div>새로운 거래 페어 추가</div>
+            </div>
+        </div>
+    </main>
+
+    <div id="nav-placeholder"></div>
+</div>
+
+<script>
+    // 공통 메뉴 인클루드 로직
+    fetch('nav.html')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById('nav-placeholder').innerHTML = data;
+        })
+        .catch(err => console.error("메뉴를 불러오지 못했습니다.", err));
+</script>
+
+</body>
+</html>
